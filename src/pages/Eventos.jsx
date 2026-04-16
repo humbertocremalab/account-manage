@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Edit } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { saveEventos, loadEventos } from '../services/database';
 import EventList from '../components/eventos/EventList';
 import TareasChecklist from '../components/eventos/TareasChecklist';
 import GastosList from '../components/eventos/GastosList';
@@ -7,41 +9,88 @@ import NewEventPopup from '../components/eventos/NewEventPopup';
 import EditEventPopup from '../components/eventos/EditEventPopup';
 
 const Eventos = () => {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [eventos, setEventos] = useState([]);
   const [eventoActivo, setEventoActivo] = useState(null);
   const [showNewEventPopup, setShowNewEventPopup] = useState(false);
   const [showEditEventPopup, setShowEditEventPopup] = useState(false);
 
-  const handleAddEvento = (nuevoEvento) => {
-    setEventos(prev => [...prev, nuevoEvento]);
-    setEventoActivo(nuevoEvento);
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user) return;
+      
+      setLoading(true);
+      try {
+        const savedEventos = await loadEventos(user.uid);
+        if (savedEventos && savedEventos.length > 0) {
+          setEventos(savedEventos);
+          setEventoActivo(savedEventos[0]);
+        }
+      } catch (error) {
+        console.error('Error loading eventos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user]);
+
+  const saveEventosToDB = async (updatedEventos) => {
+    if (user) {
+      await saveEventos(user.uid, updatedEventos);
+    }
   };
 
-  const handleUpdateEvento = (eventoActualizado) => {
+  const handleAddEvento = async (nuevoEvento) => {
+    const eventoConDatos = {
+      ...nuevoEvento,
+      tareas: [],
+      gastos: []
+    };
+    const updatedEventos = [...eventos, eventoConDatos];
+    setEventos(updatedEventos);
+    setEventoActivo(eventoConDatos);
+    await saveEventosToDB(updatedEventos);
+  };
+
+  const handleUpdateEvento = async (eventoActualizado) => {
     const updatedEventos = eventos.map(ev => 
       ev.id === eventoActualizado.id ? eventoActualizado : ev
     );
     setEventos(updatedEventos);
     setEventoActivo(eventoActualizado);
+    await saveEventosToDB(updatedEventos);
+  };
+
+  const handleDeleteEvento = async (eventoId) => {
+    const updatedEventos = eventos.filter(ev => ev.id !== eventoId);
+    setEventos(updatedEventos);
+    if (eventoActivo?.id === eventoId) {
+      setEventoActivo(updatedEventos.length > 0 ? updatedEventos[0] : null);
+    }
+    await saveEventosToDB(updatedEventos);
   };
 
   const handleSelectEvento = (evento) => {
     setEventoActivo(evento);
   };
 
-  const handleAddTarea = (texto) => {
+  const handleAddTarea = async (texto) => {
     if (!eventoActivo) return;
     
     const updatedEventos = eventos.map(ev => 
       ev.id === eventoActivo.id 
-        ? { ...ev, tareas: [...ev.tareas, { text: texto, completed: false }] }
+        ? { ...ev, tareas: [...(ev.tareas || []), { text: texto, completed: false }] }
         : ev
     );
     setEventos(updatedEventos);
     setEventoActivo(updatedEventos.find(ev => ev.id === eventoActivo.id));
+    await saveEventosToDB(updatedEventos);
   };
 
-  const handleToggleTarea = (index) => {
+  const handleToggleTarea = async (index) => {
     if (!eventoActivo) return;
     
     const updatedEventos = eventos.map(ev => 
@@ -56,9 +105,10 @@ const Eventos = () => {
     );
     setEventos(updatedEventos);
     setEventoActivo(updatedEventos.find(ev => ev.id === eventoActivo.id));
+    await saveEventosToDB(updatedEventos);
   };
 
-  const handleDeleteTarea = (index) => {
+  const handleDeleteTarea = async (index) => {
     if (!eventoActivo) return;
     
     const updatedEventos = eventos.map(ev => 
@@ -68,21 +118,23 @@ const Eventos = () => {
     );
     setEventos(updatedEventos);
     setEventoActivo(updatedEventos.find(ev => ev.id === eventoActivo.id));
+    await saveEventosToDB(updatedEventos);
   };
 
-  const handleAddGasto = (gasto) => {
+  const handleAddGasto = async (gasto) => {
     if (!eventoActivo) return;
     
     const updatedEventos = eventos.map(ev => 
       ev.id === eventoActivo.id 
-        ? { ...ev, gastos: [...ev.gastos, gasto] }
+        ? { ...ev, gastos: [...(ev.gastos || []), gasto] }
         : ev
     );
     setEventos(updatedEventos);
     setEventoActivo(updatedEventos.find(ev => ev.id === eventoActivo.id));
+    await saveEventosToDB(updatedEventos);
   };
 
-  const handleDeleteGasto = (index) => {
+  const handleDeleteGasto = async (index) => {
     if (!eventoActivo) return;
     
     const updatedEventos = eventos.map(ev => 
@@ -92,7 +144,16 @@ const Eventos = () => {
     );
     setEventos(updatedEventos);
     setEventoActivo(updatedEventos.find(ev => ev.id === eventoActivo.id));
+    await saveEventosToDB(updatedEventos);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -122,21 +183,19 @@ const Eventos = () => {
         </div>
       ) : (
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Sidebar - Lista de eventos */}
           <div className="lg:col-span-1">
             <EventList
               eventos={eventos}
               eventoActivo={eventoActivo}
               onSelectEvent={handleSelectEvento}
               onNewEvent={() => setShowNewEventPopup(true)}
+              onDeleteEvent={handleDeleteEvento}
             />
           </div>
 
-          {/* Contenido principal */}
           <div className="lg:col-span-2 space-y-4">
             {eventoActivo ? (
               <>
-                {/* Header del evento activo */}
                 <div className="bg-white rounded-xl border border-gray-200 p-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -161,7 +220,6 @@ const Eventos = () => {
                   </div>
                 </div>
 
-                {/* Tareas */}
                 <TareasChecklist
                   tareas={eventoActivo.tareas || []}
                   onAddTarea={handleAddTarea}
@@ -169,7 +227,6 @@ const Eventos = () => {
                   onDeleteTarea={handleDeleteTarea}
                 />
 
-                {/* Gastos */}
                 <GastosList
                   gastos={eventoActivo.gastos || []}
                   onAddGasto={handleAddGasto}
@@ -185,7 +242,6 @@ const Eventos = () => {
         </div>
       )}
 
-      {/* Popups */}
       <NewEventPopup
         isOpen={showNewEventPopup}
         onClose={() => setShowNewEventPopup(false)}

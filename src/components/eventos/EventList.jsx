@@ -1,7 +1,7 @@
 import React from 'react';
-import { Plus, Calendar } from 'lucide-react';
+import { Plus, Calendar, Trash2 } from 'lucide-react';
 
-const EventList = ({ eventos, eventoActivo, onSelectEvent, onNewEvent }) => {
+const EventList = ({ eventos, eventoActivo, onSelectEvent, onNewEvent, onDeleteEvent }) => {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', { 
@@ -32,16 +32,27 @@ const EventList = ({ eventos, eventoActivo, onSelectEvent, onNewEvent }) => {
           </div>
         ) : (
           eventos.map(evento => (
-            <button
+            <div
               key={evento.id}
-              onClick={() => onSelectEvent(evento)}
-              className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+              className={`relative group ${
                 eventoActivo?.id === evento.id ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''
               }`}
             >
-              <p className="font-medium text-gray-800 text-sm">{evento.nombre}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{formatDate(evento.fecha)}</p>
-            </button>
+              <button
+                onClick={() => onSelectEvent(evento)}
+                className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+              >
+                <p className="font-medium text-gray-800 text-sm">{evento.nombre}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{formatDate(evento.fecha)}</p>
+              </button>
+              <button
+                onClick={() => onDeleteEvent(evento.id)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-600 transition-all"
+                title="Eliminar evento"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           ))
         )}
       </div>

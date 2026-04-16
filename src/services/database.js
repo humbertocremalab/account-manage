@@ -13,8 +13,10 @@ const METRICS_COLLECTION = 'metrics';
 const CHECKLISTS_COLLECTION = 'checklists';
 const DRIVE_FOLDERS_COLLECTION = 'driveFolders';
 const EVENTOS_COLLECTION = 'eventos';
+const INSUMOS_COLLECTION = 'insumos';
+const TAREAS_EXPRESS_COLLECTION = 'tareasExpress';
 
-// ============== MÉTRICAS (Ahora por mes) ==============
+// ============== MÉTRICAS (por mes) ==============
 export const saveMetrics = async (userId, month, year, metrics) => {
   try {
     const docRef = doc(db, METRICS_COLLECTION, `${userId}_${year}_${month}`);
@@ -45,7 +47,7 @@ export const loadMetrics = async (userId, month, year) => {
   }
 };
 
-// ============== CHECKLISTS (Ahora por mes) ==============
+// ============== CHECKLISTS (por mes) ==============
 export const saveChecklists = async (userId, month, year, checklists) => {
   try {
     const docRef = doc(db, CHECKLISTS_COLLECTION, `${userId}_${year}_${month}`);
@@ -72,48 +74,6 @@ export const loadChecklists = async (userId, month, year) => {
     return null;
   } catch (error) {
     console.error('Error loading checklists:', error);
-    return null;
-  }
-};
-
-// ============== OBTENER TODOS LOS DATOS PARA REPORTE (FILTRADO POR MES) ==============
-export const getAllDataForReport = async (userId, month, year) => {
-  try {
-    const [metrics, checklists, driveFolders, eventos, insumos, tareasExpress] = await Promise.all([
-      loadMetrics(userId, month, year),
-      loadChecklists(userId, month, year),
-      loadDriveFolders(userId),
-      loadEventos(userId),
-      loadInsumos(userId),
-      loadTareasExpress(userId)
-    ]);
-
-    // Filtrar eventos por mes
-    const eventosFiltrados = (eventos || []).filter(evento => {
-      const fecha = new Date(evento.fecha);
-      return fecha.getMonth() === month && fecha.getFullYear() === year;
-    });
-
-    // Filtrar tareas express por mes (usando fechaEntrada)
-    const tareasFiltradas = (tareasExpress || []).filter(tarea => {
-      const fecha = new Date(tarea.fechaEntrada);
-      return fecha.getMonth() === month && fecha.getFullYear() === year;
-    });
-
-    return {
-      metrics: metrics || {
-        monterrey: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 },
-        saltillo: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 },
-        cdmx: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 }
-      },
-      checklists: checklists || { awareness: [], prospeccion: [], retargeting: [] },
-      driveFolders: driveFolders || { awareness: null, prospeccion: null, retargeting: null },
-      eventos: eventosFiltrados,
-      insumos: insumos || [],
-      tareasExpress: tareasFiltradas
-    };
-  } catch (error) {
-    console.error('Error getting all data for report:', error);
     return null;
   }
 };
@@ -171,8 +131,6 @@ export const loadEventos = async (userId) => {
 };
 
 // ============== INSUMOS ==============
-const INSUMOS_COLLECTION = 'insumos';
-
 export const saveInsumos = async (userId, insumos) => {
   try {
     const docRef = doc(db, INSUMOS_COLLECTION, userId);
@@ -199,8 +157,6 @@ export const loadInsumos = async (userId) => {
 };
 
 // ============== TAREAS EXPRESS ==============
-const TAREAS_EXPRESS_COLLECTION = 'tareasExpress';
-
 export const saveTareasExpress = async (userId, tareas) => {
   try {
     const docRef = doc(db, TAREAS_EXPRESS_COLLECTION, userId);
@@ -226,17 +182,29 @@ export const loadTareasExpress = async (userId) => {
   }
 };
 
-// ============== OBTENER TODOS LOS DATOS PARA REPORTE ==============
-export const getAllDataForReport = async (userId) => {
+// ============== OBTENER TODOS LOS DATOS PARA REPORTE (FILTRADO POR MES) ==============
+export const getAllDataForReport = async (userId, month, year) => {
   try {
     const [metrics, checklists, driveFolders, eventos, insumos, tareasExpress] = await Promise.all([
-      loadMetrics(userId),
-      loadChecklists(userId),
+      loadMetrics(userId, month, year),
+      loadChecklists(userId, month, year),
       loadDriveFolders(userId),
       loadEventos(userId),
       loadInsumos(userId),
       loadTareasExpress(userId)
     ]);
+
+    // Filtrar eventos por mes
+    const eventosFiltrados = (eventos || []).filter(evento => {
+      const fecha = new Date(evento.fecha);
+      return fecha.getMonth() === month && fecha.getFullYear() === year;
+    });
+
+    // Filtrar tareas express por mes (usando fechaEntrada)
+    const tareasFiltradas = (tareasExpress || []).filter(tarea => {
+      const fecha = new Date(tarea.fechaEntrada);
+      return fecha.getMonth() === month && fecha.getFullYear() === year;
+    });
 
     return {
       metrics: metrics || {
@@ -246,44 +214,12 @@ export const getAllDataForReport = async (userId) => {
       },
       checklists: checklists || { awareness: [], prospeccion: [], retargeting: [] },
       driveFolders: driveFolders || { awareness: null, prospeccion: null, retargeting: null },
-      eventos: eventos || [],
+      eventos: eventosFiltrados,
       insumos: insumos || [],
-      tareasExpress: tareasExpress || []
+      tareasExpress: tareasFiltradas
     };
   } catch (error) {
     console.error('Error getting all data for report:', error);
     return null;
   }
-};
-
-// ============== SUSCRIPCIONES EN TIEMPO REAL ==============
-export const subscribeToAllData = (userId, callback) => {
-  const unsubscribers = [];
-  
-  // Suscribirse a métricas
-  const unsubMetrics = onSnapshot(doc(db, METRICS_COLLECTION, userId), (docSnap) => {
-    callback('metrics', docSnap.exists() ? docSnap.data().data : null);
-  });
-  unsubscribers.push(unsubMetrics);
-  
-  // Suscribirse a checklists
-  const unsubChecklists = onSnapshot(doc(db, CHECKLISTS_COLLECTION, userId), (docSnap) => {
-    callback('checklists', docSnap.exists() ? docSnap.data().data : null);
-  });
-  unsubscribers.push(unsubChecklists);
-  
-  // Suscribirse a drive folders
-  const unsubFolders = onSnapshot(doc(db, DRIVE_FOLDERS_COLLECTION, userId), (docSnap) => {
-    callback('driveFolders', docSnap.exists() ? docSnap.data().data : null);
-  });
-  unsubscribers.push(unsubFolders);
-  
-  // Suscribirse a eventos
-  const unsubEventos = onSnapshot(doc(db, EVENTOS_COLLECTION, userId), (docSnap) => {
-    callback('eventos', docSnap.exists() ? docSnap.data().data : null);
-  });
-  unsubscribers.push(unsubEventos);
-  
-  // Retornar función para cancelar todas las suscripciones
-  return () => unsubscribers.forEach(unsub => unsub());
 };

@@ -81,9 +81,9 @@ const DriveCarousel = ({ folderData, onRemove }) => {
                   rel="noopener noreferrer"
                   className="flex-shrink-0 group"
                 >
-                  {/* Contenedor 9:16 (ancho 90px, alto 160px) */}
+                  {/* Contenedor 9:16 (ancho 90px, alto 160px) - SIN FONDO NEGRO */}
                   <div className="w-[90px]">
-                    <div className="relative h-[160px] bg-gray-900 rounded-lg overflow-hidden border border-gray-200">
+                    <div className="relative h-[160px] bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
                       {getFileType(file) === 'video' ? (
                         <div className="relative h-full">
                           <img
@@ -91,8 +91,9 @@ const DriveCarousel = ({ folderData, onRemove }) => {
                             alt={file.name}
                             className="w-full h-full object-cover"
                           />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 group-hover:bg-opacity-30 transition-all">
-                            <div className="bg-white bg-opacity-90 rounded-full p-2">
+                          {/* Overlay sutil para el ícono de play */}
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10 group-hover:bg-opacity-20 transition-all">
+                            <div className="bg-white rounded-full p-2 shadow-md">
                               <Play className="w-4 h-4 text-blue-600" />
                             </div>
                           </div>

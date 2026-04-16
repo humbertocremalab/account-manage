@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ExternalLink, FolderOpen, Play, File, Image, RefreshCw, MoreHorizontal } from 'lucide-react';
+import { Play, X } from 'lucide-react';
 import { getFilesFromFolder, getFileThumbnail, getFileType } from '../../services/driveService';
 
-const DriveCarousel = ({ folderData, onUpdate }) => {
+const DriveCarousel = ({ folderData, onRemove }) => {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -27,14 +27,7 @@ const DriveCarousel = ({ folderData, onUpdate }) => {
     }
   };
 
-  const getFileIcon = (file) => {
-    const type = getFileType(file);
-    if (type === 'video') return <Play className="w-3 h-3 text-blue-600" />;
-    if (type === 'image') return <Image className="w-3 h-3 text-green-600" />;
-    return <File className="w-3 h-3 text-gray-600" />;
-  };
-
-  const truncateFileName = (name, maxLength = 20) => {
+  const truncateFileName = (name, maxLength = 15) => {
     if (name.length <= maxLength) return name;
     const ext = name.split('.').pop();
     const nameWithoutExt = name.substring(0, name.length - ext.length - 1);
@@ -46,46 +39,41 @@ const DriveCarousel = ({ folderData, onUpdate }) => {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      {/* Header con nombre de carpeta y categoría */}
-      <div className="px-4 py-3 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <h4 className="font-medium text-gray-800">
-            {folderData.nombre} <span className="text-gray-400 text-sm font-normal">({folderData.categoria || ''})</span>
-          </h4>
-          <div className="flex items-center space-x-1">
-            <button
-              onClick={() => loadFiles(folderData.url)}
-              className="p-1 text-gray-400 hover:text-gray-600 transition-colors rounded"
-              title="Actualizar"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-            <button className="p-1 text-gray-400 hover:text-gray-600 transition-colors rounded">
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+    <div className="bg-white rounded-lg overflow-hidden">
+      {/* Header con nombre de carpeta y botón eliminar */}
+      <div className="px-3 py-2 flex items-center justify-between">
+        <h4 className="font-medium text-gray-800 text-sm">
+          {folderData.nombre} <span className="text-gray-400 font-normal">({folderData.categoria})</span>
+        </h4>
+        {onRemove && (
+          <button
+            onClick={() => onRemove(folderData.categoria)}
+            className="p-1 text-gray-400 hover:text-red-500 transition-colors rounded"
+            title="Eliminar carpeta"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
-      {/* Lista de archivos con scroll horizontal */}
-      <div className="p-4">
+      {/* Lista de archivos con scroll horizontal - Formato 9:16 */}
+      <div className="px-3 pb-3">
         {loading ? (
           <div className="py-8 flex items-center justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
           </div>
         ) : error ? (
-          <div className="py-8 text-center text-red-500 text-sm">
+          <div className="py-8 text-center text-red-500 text-xs">
             {error}
           </div>
         ) : files.length === 0 ? (
-          <div className="py-8 text-center text-gray-500 text-sm">
+          <div className="py-8 text-center text-gray-500 text-xs">
             No hay archivos en esta carpeta
           </div>
         ) : (
-          <div className="overflow-x-auto pb-2 -mx-4 px-4">
+          <div className="overflow-x-auto pb-1 -mx-3 px-3">
             <div className="flex space-x-3 min-w-max">
-              {files.map((file, index) => (
+              {files.map((file) => (
                 <a
                   key={file.id}
                   href={file.webViewLink}
@@ -93,9 +81,9 @@ const DriveCarousel = ({ folderData, onUpdate }) => {
                   rel="noopener noreferrer"
                   className="flex-shrink-0 group"
                 >
-                  <div className="w-32">
-                    {/* Thumbnail */}
-                    <div className="relative h-20 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                  {/* Contenedor 9:16 (ancho 90px, alto 160px) */}
+                  <div className="w-[90px]">
+                    <div className="relative h-[160px] bg-gray-900 rounded-lg overflow-hidden border border-gray-200">
                       {getFileType(file) === 'video' ? (
                         <div className="relative h-full">
                           <img
@@ -104,8 +92,8 @@ const DriveCarousel = ({ folderData, onUpdate }) => {
                             className="w-full h-full object-cover"
                           />
                           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 group-hover:bg-opacity-30 transition-all">
-                            <div className="bg-white bg-opacity-90 rounded-full p-1.5">
-                              <Play className="w-3 h-3 text-blue-600" />
+                            <div className="bg-white bg-opacity-90 rounded-full p-2">
+                              <Play className="w-4 h-4 text-blue-600" />
                             </div>
                           </div>
                         </div>
@@ -116,20 +104,15 @@ const DriveCarousel = ({ folderData, onUpdate }) => {
                           className="w-full h-full object-cover"
                         />
                       )}
-                      
-                      {/* Icono de tipo de archivo */}
-                      <div className="absolute bottom-1 left-1 bg-white bg-opacity-90 rounded p-0.5">
-                        {getFileIcon(file)}
-                      </div>
                     </div>
                     
-                    {/* Nombre del archivo */}
-                    <div className="mt-1.5 flex items-start space-x-1">
-                      {getFileIcon(file)}
-                      <p className="text-xs text-gray-700 truncate flex-1" title={file.name}>
-                        {truncateFileName(file.name, 18)}
-                      </p>
-                    </div>
+                    {/* Nombre del archivo truncado */}
+                    <p 
+                      className="mt-1.5 text-xs text-gray-700 truncate text-center"
+                      title={file.name}
+                    >
+                      {truncateFileName(file.name, 12)}
+                    </p>
                   </div>
                 </a>
               ))}

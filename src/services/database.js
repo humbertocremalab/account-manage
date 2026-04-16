@@ -157,6 +157,34 @@ export const loadInsumos = async (userId) => {
   }
 };
 
+// ============== TAREAS EXPRESS ==============
+const TAREAS_EXPRESS_COLLECTION = 'tareasExpress';
+
+export const saveTareasExpress = async (userId, tareas) => {
+  try {
+    const docRef = doc(db, TAREAS_EXPRESS_COLLECTION, userId);
+    await setDoc(docRef, { data: tareas }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error('Error saving tareas express:', error);
+    return false;
+  }
+};
+
+export const loadTareasExpress = async (userId) => {
+  try {
+    const docRef = doc(db, TAREAS_EXPRESS_COLLECTION, userId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().data;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error loading tareas express:', error);
+    return null;
+  }
+};
+
 // ============== SUSCRIPCIONES EN TIEMPO REAL ==============
 export const subscribeToAllData = (userId, callback) => {
   const unsubscribers = [];

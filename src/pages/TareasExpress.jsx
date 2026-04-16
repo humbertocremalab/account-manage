@@ -1,30 +1,221 @@
-import React, { useState } from 'react';
-import { Zap, Plus, Clock, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Zap } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { saveTareasExpress, loadTareasExpress } from '../services/database';
+import TareaExpressCard from '../components/express/TareaExpressCard';
+import TareaExpressPopup from '../components/express/TareaExpressPopup';
+import ResumenTareasExpress from '../components/express/ResumenTareasExpress';
 
 const TareasExpress = () => {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [tareas, setTareas] = useState([]);
-  const [showForm, setShowForm] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [tareaEditando, setTareaEditando] = useState(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user) return;
+      
+      setLoading(true);
+      try {
+        const savedTareas = await loadTareasExpress(user.uid);
+        if (savedTareas) {
+          setTareas(savedTareas);
+        }
+      } catch (error) {
+        console.error('Error loading tareas express:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user]);
+
+  const saveTareasToDB = async (updatedTareas) => {
+    if (user) {
+      await saveTareasExpress(user.uid, updatedTareas);
+    }
+  };
+
+  const handleAddTarea = async (nuevaTarea) => {
+    const updatedTareas = [...tareas, nuevaTarea];
+    setTareas(updatedTareas);
+    await saveTareasToDB(updatedTareas);
+  };
+
+  const handleUpdateTarea = async (tareaActualizada) => {
+    const updatedTareas = tareas.map(t => 
+      t.id === tareaActualizada.id ? tareaActualizada : t
+    );
+    setTareas(updatedTareas);
+    await saveTareasToDB(updatedTareas);
+    setTareaEditando(null);
+  };
+
+  const handleDeleteTarea = async (id) => {
+    const updatedTareas = tareas.filter(t => t.id !== id);
+    setTareas(updatedTareas);
+    await saveTareasToDB(updatedTareas);
+  };
+
+  const handleToggleComplete = async (tarea) => {
+    const nuevoEstado = tarea.estado === 'completada' ? 'pendiente' : 'completada';
+    const tareaActualizada = { 
+      ...tarea, 
+      estado: nuevoEstado,
+      progreso: nuevoEstado === 'completada' ? 100 : tarea.progreso
+    };
+    await handleUpdateTarea(tareaActualizada);
+  };
+
+  const handleUpdateProgreso = async (id, progreso) => {
+    const tarea = tareas.find(t => t.id === id);
+    if (tarea) {
+      const nuevoEstado = progreso === 100 ? 'completada' : 'en_progreso';
+      await handleUpdateTarea({ ...tarea, progreso, estado: nuevoEstado });
+    }
+  };
+
+  const handleEditTarea = (tarea) => {
+    setTareaEditando(tarea);
+    setShowPopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    setTareaEditando(null);
+  };
+
+  // Agrupar tareas por estado
+  const tareasPendientes = tareas.filter(t => t.estado === 'pendiente');
+  const tareasEnProgreso = tareas.filter(t => t.estado === 'en_progreso');
+  const tareasCompletadas = tareas.filter(t => t.estado === 'completada');
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Tareas Express</h2>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-1">Tareas Express</h2>
+          <p className="text-gray-600 text-sm">
+            Gestiona tareas rápidas no proyectadas
+          </p>
+        </div>
         <button
-          onClick={() => setShowForm(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+          onClick={() => setShowPopup(true)}
+          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4 mr-2" />
           Nueva Tarea
         </button>
       </div>
 
-      <div className="grid gap-3">
-        {tareas.map((tarea, index) => (
-          <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
-            {/* Item de tarea */}
+      {tareas.length === 0 ? (
+        <div className="bg-gray-50 rounded-xl p-12 text-center">
+          <Zap className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-800 mb-2">
+            No hay tareas express
+          </h3>
+          <p className="text-gray-500 mb-6">
+            Agrega tareas rápidas que surgen en el día a día
+          </p>
+          <button
+            onClick={() => setShowPopup(true)}
+            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Crear primera tarea
+          </button>
+        </div>
+      ) : (
+        <>
+          <ResumenTareasExpress tareas={tareas} />
+          
+          <div className="space-y-6">
+            {/* Tareas Pendientes */}
+            {tareasPendientes.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
+                  <span className="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                  Pendientes ({tareasPendientes.length})
+                </h3>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {tareasPendientes.map(tarea => (
+                    <TareaExpressCard
+                      key={tarea.id}
+                      tarea={tarea}
+                      onEdit={handleEditTarea}
+                      onDelete={handleDeleteTarea}
+                      onToggleComplete={handleToggleComplete}
+                      onUpdateProgreso={handleUpdateProgreso}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tareas en Progreso */}
+            {tareasEnProgreso.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
+                  <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                  En Progreso ({tareasEnProgreso.length})
+                </h3>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {tareasEnProgreso.map(tarea => (
+                    <TareaExpressCard
+                      key={tarea.id}
+                      tarea={tarea}
+                      onEdit={handleEditTarea}
+                      onDelete={handleDeleteTarea}
+                      onToggleComplete={handleToggleComplete}
+                      onUpdateProgreso={handleUpdateProgreso}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tareas Completadas */}
+            {tareasCompletadas.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
+                  <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                  Completadas ({tareasCompletadas.length})
+                </h3>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {tareasCompletadas.map(tarea => (
+                    <TareaExpressCard
+                      key={tarea.id}
+                      tarea={tarea}
+                      onEdit={handleEditTarea}
+                      onDelete={handleDeleteTarea}
+                      onToggleComplete={handleToggleComplete}
+                      onUpdateProgreso={handleUpdateProgreso}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        ))}
-      </div>
+        </>
+      )}
+
+      <TareaExpressPopup
+        isOpen={showPopup}
+        onClose={handleClosePopup}
+        onSave={tareaEditando ? handleUpdateTarea : handleAddTarea}
+        tarea={tareaEditando}
+      />
     </div>
   );
 };

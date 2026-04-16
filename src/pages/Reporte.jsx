@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Download, Calendar, TrendingUp, TrendingDown, Image } from 'lucide-react';
+import { Download, Calendar, Image } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getAllDataForReport } from '../services/database';
 import html2canvas from 'html2canvas';
@@ -8,13 +8,8 @@ const Reporte = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState(null);
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return now.getMonth();
-  });
-  const [selectedYear, setSelectedYear] = useState(() => {
-    return new Date().getFullYear();
-  });
+  const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
   const [generatingImage, setGeneratingImage] = useState(false);
   const reportRef = useRef(null);
 
@@ -33,22 +28,23 @@ const Reporte = () => {
   };
 
   useEffect(() => {
-  const loadReportData = async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    try {
-      const data = await getAllDataForReport(user.uid, selectedMonth, selectedYear);
-      setReportData(data);
-    } catch (error) {
-      console.error('Error loading report data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const loadReportData = async () => {
+      if (!user) return;
+      
+      setLoading(true);
+      try {
+        const data = await getAllDataForReport(user.uid, selectedMonth, selectedYear);
+        console.log('Report data loaded:', data);
+        setReportData(data);
+      } catch (error) {
+        console.error('Error loading report data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  loadReportData();
-}, [user, selectedMonth, selectedYear]);
+    loadReportData();
+  }, [user, selectedMonth, selectedYear]);
 
   const getMetricasSucursal = (sucursal) => {
     if (!reportData?.metrics) {
@@ -65,24 +61,54 @@ const Reporte = () => {
   };
 
   const generateImage = async () => {
-    if (!reportRef.current) return;
+    if (!reportRef.current) {
+      console.error('Report ref is null');
+      return;
+    }
     
     setGeneratingImage(true);
+    console.log('Generating image...');
+    
     try {
+      // Pequeño delay para asegurar que todo esté renderizado
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const canvas = await html2canvas(reportRef.current, {
         scale: 2,
         backgroundColor: '#ffffff',
-        logging: false,
-        allowTaint: true,
-        useCORS: true
+        logging: true,
+        allowTaint: false,
+        useCORS: true,
+        onclone: (clonedDoc) => {
+          console.log('Document cloned for capture');
+        }
       });
       
-      const link = document.createElement('a');
-      link.download = `Reporte_${months[selectedMonth]}_${selectedYear}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      console.log('Canvas created:', canvas.width, 'x', canvas.height);
+      
+      // Convertir a blob y descargar
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.download = `Reporte_${months[selectedMonth]}_${selectedYear}.png`;
+          link.href = url;
+          link.click();
+          URL.revokeObjectURL(url);
+          console.log('Image downloaded successfully');
+        } else {
+          console.error('Failed to create blob');
+          // Fallback: usar dataURL
+          const link = document.createElement('a');
+          link.download = `Reporte_${months[selectedMonth]}_${selectedYear}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        }
+      }, 'image/png');
+      
     } catch (error) {
       console.error('Error generating image:', error);
+      alert('Error al generar la imagen: ' + error.message);
     } finally {
       setGeneratingImage(false);
     }
@@ -164,7 +190,11 @@ const Reporte = () => {
       </div>
 
       {/* Contenido del reporte (se capturará como imagen) */}
-      <div ref={reportRef} className="bg-white rounded-xl p-6" style={{ backgroundColor: '#ffffff' }}>
+      <div 
+        ref={reportRef} 
+        className="bg-white rounded-xl p-6" 
+        style={{ backgroundColor: '#ffffff' }}
+      >
         {/* Header del reporte */}
         <div className="border-b border-gray-200 pb-4 mb-6">
           <h3 className="text-xl font-bold text-gray-800">Account Manager</h3>

@@ -62,20 +62,8 @@ const TareasExpress = () => {
 
   const handleToggleComplete = async (tarea) => {
     const nuevoEstado = tarea.estado === 'completada' ? 'pendiente' : 'completada';
-    const tareaActualizada = { 
-      ...tarea, 
-      estado: nuevoEstado,
-      progreso: nuevoEstado === 'completada' ? 100 : tarea.progreso
-    };
+    const tareaActualizada = { ...tarea, estado: nuevoEstado };
     await handleUpdateTarea(tareaActualizada);
-  };
-
-  const handleUpdateProgreso = async (id, progreso) => {
-    const tarea = tareas.find(t => t.id === id);
-    if (tarea) {
-      const nuevoEstado = progreso === 100 ? 'completada' : 'en_progreso';
-      await handleUpdateTarea({ ...tarea, progreso, estado: nuevoEstado });
-    }
   };
 
   const handleEditTarea = (tarea) => {
@@ -88,7 +76,6 @@ const TareasExpress = () => {
     setTareaEditando(null);
   };
 
-  // Agrupar tareas por estado
   const tareasPendientes = tareas.filter(t => t.estado === 'pendiente');
   const tareasEnProgreso = tareas.filter(t => t.estado === 'en_progreso');
   const tareasCompletadas = tareas.filter(t => t.estado === 'completada');
@@ -141,7 +128,6 @@ const TareasExpress = () => {
           <ResumenTareasExpress tareas={tareas} />
           
           <div className="space-y-6">
-            {/* Tareas Pendientes */}
             {tareasPendientes.length > 0 && (
               <div>
                 <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
@@ -156,14 +142,12 @@ const TareasExpress = () => {
                       onEdit={handleEditTarea}
                       onDelete={handleDeleteTarea}
                       onToggleComplete={handleToggleComplete}
-                      onUpdateProgreso={handleUpdateProgreso}
                     />
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Tareas en Progreso */}
             {tareasEnProgreso.length > 0 && (
               <div>
                 <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
@@ -178,14 +162,12 @@ const TareasExpress = () => {
                       onEdit={handleEditTarea}
                       onDelete={handleDeleteTarea}
                       onToggleComplete={handleToggleComplete}
-                      onUpdateProgreso={handleUpdateProgreso}
                     />
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Tareas Completadas */}
             {tareasCompletadas.length > 0 && (
               <div>
                 <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
@@ -200,7 +182,6 @@ const TareasExpress = () => {
                       onEdit={handleEditTarea}
                       onDelete={handleDeleteTarea}
                       onToggleComplete={handleToggleComplete}
-                      onUpdateProgreso={handleUpdateProgreso}
                     />
                   ))}
                 </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, User, Edit, Trash2, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
-const TareaExpressCard = ({ tarea, onEdit, onDelete, onToggleComplete, onUpdateProgreso }) => {
+const TareaExpressCard = ({ tarea, onEdit, onDelete, onToggleComplete }) => {
   const getEstadoConfig = (estado) => {
     switch (estado) {
       case 'completada':
@@ -115,29 +115,6 @@ const TareaExpressCard = ({ tarea, onEdit, onDelete, onToggleComplete, onUpdateP
           </div>
         )}
       </div>
-
-      {tarea.estado === 'en_progreso' && (
-        <div className="mt-2">
-          <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-gray-600">Progreso</span>
-            <span className="font-medium">{tarea.progreso || 0}%</span>
-          </div>
-          <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-blue-600 rounded-full transition-all"
-              style={{ width: `${tarea.progreso || 0}%` }}
-            />
-          </div>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={tarea.progreso || 0}
-            onChange={(e) => onUpdateProgreso(tarea.id, parseInt(e.target.value))}
-            className="w-full mt-2"
-          />
-        </div>
-      )}
 
       <div className="mt-3 pt-3 border-t border-gray-100">
         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${estadoConfig.bgColor} ${estadoConfig.textColor}`}>

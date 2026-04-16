@@ -7,8 +7,7 @@ const TareaExpressPopup = ({ isOpen, onClose, onSave, tarea }) => {
     responsable: '',
     fechaEntrada: new Date().toISOString().split('T')[0],
     fechaVencimiento: '',
-    estado: 'pendiente',
-    progreso: 0
+    estado: 'pendiente'
   });
 
   useEffect(() => {
@@ -18,8 +17,7 @@ const TareaExpressPopup = ({ isOpen, onClose, onSave, tarea }) => {
         responsable: tarea.responsable || '',
         fechaEntrada: tarea.fechaEntrada || new Date().toISOString().split('T')[0],
         fechaVencimiento: tarea.fechaVencimiento || '',
-        estado: tarea.estado || 'pendiente',
-        progreso: tarea.progreso || 0
+        estado: tarea.estado || 'pendiente'
       });
     } else {
       const today = new Date().toISOString().split('T')[0];
@@ -28,8 +26,7 @@ const TareaExpressPopup = ({ isOpen, onClose, onSave, tarea }) => {
         responsable: '',
         fechaEntrada: today,
         fechaVencimiento: '',
-        estado: 'pendiente',
-        progreso: 0
+        estado: 'pendiente'
       });
     }
   }, [tarea, isOpen]);
@@ -149,22 +146,6 @@ const TareaExpressPopup = ({ isOpen, onClose, onSave, tarea }) => {
               ))}
             </select>
           </div>
-
-          {formData.estado === 'en_progreso' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Progreso: {formData.progreso}%
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={formData.progreso}
-                onChange={(e) => setFormData({ ...formData, progreso: parseInt(e.target.value) })}
-                className="w-full"
-              />
-            </div>
-          )}
 
           <div className="flex space-x-3 pt-2">
             <button

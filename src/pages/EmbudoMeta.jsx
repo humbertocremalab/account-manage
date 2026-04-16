@@ -96,17 +96,17 @@ const EmbudoMeta = () => {
     }));
   };
 
-  const handleRemoveDriveFolder = (categoria) => {
-    setDriveFolders(prev => ({
-      ...prev,
-      [categoria]: null
-    }));
-  };
+ const handleRemoveDriveFolder = (categoria) => {
+  setDriveFolders(prev => ({
+    ...prev,
+    [categoria]: null
+  }));
+};
 
-  const handleOpenDrivePopup = (categoria = 'awareness') => {
-    setCategoriaSeleccionada(categoria);
-    setShowDrivePopup(true);
-  };
+ const handleOpenDrivePopup = () => {
+  setCategoriaSeleccionada('awareness'); // valor por defecto
+  setShowDrivePopup(true);
+};
 
   const porcentajeLeads = ((metricsActuales.leadsGenerados / metricsActuales.leadsMeta) * 100).toFixed(1);
   const porcentajeGasto = ((metricsActuales.gasto / metricsActuales.presupuesto) * 100).toFixed(1);
@@ -227,82 +227,69 @@ const EmbudoMeta = () => {
 
 {/* Artes del Embudo */}
 <div>
-  <div className="flex items-center justify-between mb-4">
-    <h3 className="text-xl font-semibold text-gray-800">Artes del Embudo</h3>
-  </div>
+  <h3 className="text-xl font-semibold text-gray-800 mb-4">Artes del Embudo</h3>
   
   <div className="space-y-4">
-    {/* AWARENESS */}
-    <div className="bg-gray-50 rounded-xl p-4">
-      {driveFolders.awareness ? (
+    {/* Awareness */}
+    {driveFolders.awareness && (
+      <div className="bg-gray-50 rounded-xl p-4">
         <DriveCarousel 
           folderData={{...driveFolders.awareness, categoria: 'awareness'}}
           onRemove={handleRemoveDriveFolder}
         />
-      ) : (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-            <h4 className="font-medium text-gray-700">Awareness</h4>
-          </div>
-          <button
-            onClick={() => handleOpenDrivePopup('awareness')}
-            className="text-sm text-blue-600 hover:text-blue-700 flex items-center"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Agregar carpeta
-          </button>
-        </div>
-      )}
-    </div>
-
-    {/* PROSPECCIÓN */}
-    <div className="bg-gray-50 rounded-xl p-4">
-      {driveFolders.prospeccion ? (
+      </div>
+    )}
+    
+    {/* Prospección */}
+    {driveFolders.prospeccion && (
+      <div className="bg-gray-50 rounded-xl p-4">
         <DriveCarousel 
           folderData={{...driveFolders.prospeccion, categoria: 'prospeccion'}}
           onRemove={handleRemoveDriveFolder}
         />
-      ) : (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-            <h4 className="font-medium text-gray-700">Prospección</h4>
-          </div>
-          <button
-            onClick={() => handleOpenDrivePopup('prospeccion')}
-            className="text-sm text-blue-600 hover:text-blue-700 flex items-center"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Agregar carpeta
-          </button>
-        </div>
-      )}
-    </div>
-
-    {/* RETARGETING */}
-    <div className="bg-gray-50 rounded-xl p-4">
-      {driveFolders.retargeting ? (
+      </div>
+    )}
+    
+    {/* Retargeting */}
+    {driveFolders.retargeting && (
+      <div className="bg-gray-50 rounded-xl p-4">
         <DriveCarousel 
           folderData={{...driveFolders.retargeting, categoria: 'retargeting'}}
           onRemove={handleRemoveDriveFolder}
         />
-      ) : (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
-            <h4 className="font-medium text-gray-700">Retargeting</h4>
-          </div>
-          <button
-            onClick={() => handleOpenDrivePopup('retargeting')}
-            className="text-sm text-blue-600 hover:text-blue-700 flex items-center"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Agregar carpeta
-          </button>
-        </div>
-      )}
-    </div>
+      </div>
+    )}
+
+    {/* Estado inicial - sin carpetas */}
+    {!driveFolders.awareness && !driveFolders.prospeccion && !driveFolders.retargeting && (
+      <div className="bg-gray-50 rounded-xl p-8 text-center">
+        <FolderOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+        <p className="text-gray-600 mb-1">
+          No hay carpetas de Drive conectadas
+        </p>
+        <p className="text-sm text-gray-400 mb-4">
+          Agrega el ID de una carpeta pública de Google Drive
+        </p>
+        <button
+          onClick={handleOpenDrivePopup}
+          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Agregar carpeta
+        </button>
+      </div>
+    )}
+
+    {/* Botón para agregar más carpetas */}
+    {(driveFolders.awareness || driveFolders.prospeccion || driveFolders.retargeting) && (
+      <button
+        onClick={handleOpenDrivePopup}
+        className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center justify-center"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Agregar carpeta Drive
+      </button>
+    )}
   </div>
 </div>
 

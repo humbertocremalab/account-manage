@@ -43,8 +43,8 @@ const DriveCarousel = ({ folderData, onRemove }) => {
       {/* Header con nombre de carpeta y botón eliminar */}
       <div className="px-3 py-2 flex items-center justify-between">
         <h4 className="font-medium text-gray-800 text-sm">
-          {folderData.nombre} <span className="text-gray-400 font-normal">({folderData.categoria})</span>
-        </h4>
+  {folderData.nombre} <span className="text-gray-400 font-normal">({folderData.categoria})</span>
+</h4>
         {onRemove && (
           <button
             onClick={() => onRemove(folderData.categoria)}

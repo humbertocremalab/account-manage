@@ -3,11 +3,10 @@ const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
 
 export const getFilesFromFolder = async (folderId) => {
   try {
-    // Extraer ID de la URL si es necesario
     const cleanFolderId = extractFolderIdFromUrl(folderId);
     
     const response = await fetch(
-      `${DRIVE_API_BASE}/files?q='${cleanFolderId}'+in+parents&key=${DRIVE_API_KEY}&fields=files(id,name,mimeType,webViewLink,thumbnailLink,size)`
+      `${DRIVE_API_BASE}/files?q='${cleanFolderId}'+in+parents&key=${DRIVE_API_KEY}&fields=files(id,name,mimeType,webViewLink,thumbnailLink,hasThumbnail)`
     );
     
     if (!response.ok) {
@@ -15,6 +14,7 @@ export const getFilesFromFolder = async (folderId) => {
     }
     
     const data = await response.json();
+    console.log('Archivos obtenidos:', data.files); // Para debug
     return data.files || [];
   } catch (error) {
     console.error('Error fetching Drive files:', error);
@@ -23,13 +23,29 @@ export const getFilesFromFolder = async (folderId) => {
 };
 
 export const getFileThumbnail = (file) => {
+  // Si el archivo tiene thumbnailLink proporcionado por Google
+  if (file.thumbnailLink) {
+    // Modificar el tamaño de la miniatura
+    return file.thumbnailLink.replace('=s220', '=s400');
+  }
+  
+  // Si es una imagen, podemos obtener miniatura directamente
   if (file.mimeType?.startsWith('image/')) {
     return `https://drive.google.com/thumbnail?id=${file.id}&sz=w400`;
   }
+  
+  // Si es un video, intentar obtener miniatura
   if (file.mimeType?.startsWith('video/')) {
     return `https://drive.google.com/thumbnail?id=${file.id}&sz=w400`;
   }
-  return file.thumbnailLink || '/file-placeholder.png';
+  
+  // Si es PDF
+  if (file.mimeType?.includes('pdf')) {
+    return `https://drive.google.com/thumbnail?id=${file.id}&sz=w400`;
+  }
+  
+  // Fallback para otros tipos
+  return `https://drive.google.com/thumbnail?id=${file.id}&sz=w400`;
 };
 
 export const getFileType = (file) => {
@@ -40,12 +56,10 @@ export const getFileType = (file) => {
 };
 
 export const extractFolderIdFromUrl = (url) => {
-  // Si ya es un ID (sin slashes ni puntos)
   if (/^[a-zA-Z0-9_-]{25,}$/.test(url)) {
     return url;
   }
   
-  // Extraer de URL de Drive
   const patterns = [
     /\/folders\/([a-zA-Z0-9_-]+)/,
     /id=([a-zA-Z0-9_-]+)/,
@@ -58,4 +72,14 @@ export const extractFolderIdFromUrl = (url) => {
   }
   
   return url;
+};
+
+// Función para verificar si una imagen carga correctamente
+export const checkImageExists = (url) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = url;
+  });
 };

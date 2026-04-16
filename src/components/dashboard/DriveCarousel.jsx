@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Play, X } from 'lucide-react';
+import { Play, X, Image as ImageIcon, File } from 'lucide-react';
 import { getFilesFromFolder, getFileThumbnail, getFileType } from '../../services/driveService';
 
 const DriveCarousel = ({ folderData, onRemove }) => {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [thumbnailErrors, setThumbnailErrors] = useState({});
 
   useEffect(() => {
     if (folderData?.url) {
@@ -16,8 +17,10 @@ const DriveCarousel = ({ folderData, onRemove }) => {
   const loadFiles = async (url) => {
     setLoading(true);
     setError('');
+    setThumbnailErrors({});
     try {
       const filesList = await getFilesFromFolder(url);
+      console.log('Files loaded:', filesList); // Para debug
       setFiles(filesList);
     } catch (err) {
       setError('Error al cargar archivos');
@@ -28,10 +31,45 @@ const DriveCarousel = ({ folderData, onRemove }) => {
   };
 
   const truncateFileName = (name, maxLength = 15) => {
+    if (!name) return '';
     if (name.length <= maxLength) return name;
     const ext = name.split('.').pop();
     const nameWithoutExt = name.substring(0, name.length - ext.length - 1);
     return nameWithoutExt.substring(0, maxLength - 3) + '...' + (ext ? '.' + ext : '');
+  };
+
+  const handleThumbnailError = (fileId) => {
+    setThumbnailErrors(prev => ({ ...prev, [fileId]: true }));
+  };
+
+  const getThumbnailWithFallback = (file) => {
+    if (thumbnailErrors[file.id]) {
+      return null;
+    }
+    return getFileThumbnail(file);
+  };
+
+  const getFileIconComponent = (file) => {
+    const type = getFileType(file);
+    if (type === 'video') {
+      return (
+        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+          <Play className="w-8 h-8 text-white" />
+        </div>
+      );
+    }
+    if (type === 'image') {
+      return (
+        <div className="w-full h-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
+          <ImageIcon className="w-8 h-8 text-white" />
+        </div>
+      );
+    }
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center">
+        <File className="w-8 h-8 text-white" />
+      </div>
+    );
   };
 
   if (!folderData?.url) {
@@ -40,11 +78,11 @@ const DriveCarousel = ({ folderData, onRemove }) => {
 
   return (
     <div className="bg-white rounded-lg overflow-hidden">
-      {/* Header con nombre de carpeta y botón eliminar */}
+      {/* Header */}
       <div className="px-3 py-2 flex items-center justify-between">
         <h4 className="font-medium text-gray-800 text-sm">
-  {folderData.nombre} <span className="text-gray-400 font-normal">({folderData.categoria})</span>
-</h4>
+          {folderData.nombre} <span className="text-gray-400 font-normal">({folderData.categoria})</span>
+        </h4>
         {onRemove && (
           <button
             onClick={() => onRemove(folderData.categoria)}
@@ -56,7 +94,7 @@ const DriveCarousel = ({ folderData, onRemove }) => {
         )}
       </div>
 
-      {/* Lista de archivos con scroll horizontal - Formato 9:16 */}
+      {/* Lista de archivos */}
       <div className="px-3 pb-3">
         {loading ? (
           <div className="py-8 flex items-center justify-center">
@@ -73,50 +111,60 @@ const DriveCarousel = ({ folderData, onRemove }) => {
         ) : (
           <div className="overflow-x-auto pb-1 -mx-3 px-3">
             <div className="flex space-x-3 min-w-max">
-              {files.map((file) => (
-                <a
-                  key={file.id}
-                  href={file.webViewLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-shrink-0 group"
-                >
-                  {/* Contenedor 9:16 (ancho 90px, alto 160px) - SIN FONDO NEGRO */}
-                  <div className="w-[90px]">
-                    <div className="relative h-[160px] bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                      {getFileType(file) === 'video' ? (
-                        <div className="relative h-full">
-                          <img
-                            src={getFileThumbnail(file)}
-                            alt={file.name}
-                            className="w-full h-full object-cover"
-                          />
-                          {/* Overlay sutil para el ícono de play */}
-                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10 group-hover:bg-opacity-20 transition-all">
-                            <div className="bg-white rounded-full p-2 shadow-md">
-                              <Play className="w-4 h-4 text-blue-600" />
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <img
-                          src={getFileThumbnail(file)}
-                          alt={file.name}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
+              {files.map((file) => {
+                const thumbnailUrl = getThumbnailWithFallback(file);
+                const hasError = thumbnailErrors[file.id];
+                
+                return (
+                  <a
+                    key={file.id}
+                    href={file.webViewLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0 group cursor-pointer"
+                  >
+                    <div className="w-[90px]">
+                      <div className="relative h-[160px] bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                        {!hasError && thumbnailUrl ? (
+                          <>
+                            <img
+                              src={thumbnailUrl}
+                              alt={file.name}
+                              className="w-full h-full object-cover"
+                              onError={() => handleThumbnailError(file.id)}
+                            />
+                            {getFileType(file) === 'video' && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10 group-hover:bg-opacity-20 transition-all">
+                                <div className="bg-white rounded-full p-2 shadow-md">
+                                  <Play className="w-4 h-4 text-blue-600" />
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {getFileIconComponent(file)}
+                            {getFileType(file) === 'video' && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
+                                <div className="bg-white rounded-full p-2 shadow-md">
+                                  <Play className="w-4 h-4 text-blue-600" />
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                      
+                      <p 
+                        className="mt-1.5 text-xs text-gray-700 truncate text-center"
+                        title={file.name}
+                      >
+                        {truncateFileName(file.name, 12)}
+                      </p>
                     </div>
-                    
-                    {/* Nombre del archivo truncado */}
-                    <p 
-                      className="mt-1.5 text-xs text-gray-700 truncate text-center"
-                      title={file.name}
-                    >
-                      {truncateFileName(file.name, 12)}
-                    </p>
-                  </div>
-                </a>
-              ))}
+                  </a>
+                );
+              })}
             </div>
           </div>
         )}

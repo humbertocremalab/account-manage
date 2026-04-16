@@ -196,7 +196,7 @@ const EmbudoMeta = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6">
       {/* Selector de mes y año */}
       <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4">
         <div className="flex items-center space-x-4">

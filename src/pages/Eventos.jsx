@@ -156,7 +156,7 @@ const Eventos = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Eventos</h2>
         <p className="text-gray-600 text-sm">

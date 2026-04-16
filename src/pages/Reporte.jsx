@@ -130,7 +130,7 @@ const Reporte = () => {
   const retargetingCompleted = retargeting.filter(i => i.completed).length;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-2">Reporte Mensual</h2>
       <p className="text-gray-600 text-sm mb-6">
         Resumen de todas las áreas por mes

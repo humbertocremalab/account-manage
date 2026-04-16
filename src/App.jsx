@@ -7,8 +7,7 @@ import Eventos from './pages/Eventos';
 import Insumos from './pages/Insumos';
 import TareasExpress from './pages/TareasExpress';
 import Reporte from './pages/Reporte';
-import Header from './components/layout/Header';
-import TabNavigation from './components/layout/TabNavigation';
+import Sidebar from './components/layout/Sidebar';
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
@@ -28,18 +27,19 @@ const AppContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <TabNavigation />
-      <Routes>
-        <Route path="/" element={<Navigate to="/embudo-meta" />} />
-        <Route path="/embudo-meta" element={<EmbudoMeta />} />
-        <Route path="/eventos" element={<Eventos />} />
-        <Route path="/insumos" element={<Insumos />} />
-        <Route path="/express" element={<TareasExpress />} />
-        <Route path="/reporte" element={<Reporte />} />
-        <Route path="*" element={<Navigate to="/embudo-meta" />} />
-      </Routes>
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar />
+      <div className="flex-1 overflow-auto">
+        <Routes>
+          <Route path="/" element={<Navigate to="/embudo-meta" />} />
+          <Route path="/embudo-meta" element={<EmbudoMeta />} />
+          <Route path="/eventos" element={<Eventos />} />
+          <Route path="/insumos" element={<Insumos />} />
+          <Route path="/express" element={<TareasExpress />} />
+          <Route path="/reporte" element={<Reporte />} />
+          <Route path="*" element={<Navigate to="/embudo-meta" />} />
+        </Routes>
+      </div>
     </div>
   );
 };

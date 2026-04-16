@@ -185,6 +185,36 @@ export const loadTareasExpress = async (userId) => {
   }
 };
 
+// ============== OBTENER TODOS LOS DATOS PARA REPORTE ==============
+export const getAllDataForReport = async (userId) => {
+  try {
+    const [metrics, checklists, driveFolders, eventos, insumos, tareasExpress] = await Promise.all([
+      loadMetrics(userId),
+      loadChecklists(userId),
+      loadDriveFolders(userId),
+      loadEventos(userId),
+      loadInsumos(userId),
+      loadTareasExpress(userId)
+    ]);
+
+    return {
+      metrics: metrics || {
+        monterrey: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 },
+        saltillo: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 },
+        cdmx: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 }
+      },
+      checklists: checklists || { awareness: [], prospeccion: [], retargeting: [] },
+      driveFolders: driveFolders || { awareness: null, prospeccion: null, retargeting: null },
+      eventos: eventos || [],
+      insumos: insumos || [],
+      tareasExpress: tareasExpress || []
+    };
+  } catch (error) {
+    console.error('Error getting all data for report:', error);
+    return null;
+  }
+};
+
 // ============== SUSCRIPCIONES EN TIEMPO REAL ==============
 export const subscribeToAllData = (userId, callback) => {
   const unsubscribers = [];

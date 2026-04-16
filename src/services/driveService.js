@@ -6,7 +6,7 @@ export const getFilesFromFolder = async (folderId) => {
     const cleanFolderId = extractFolderIdFromUrl(folderId);
     
     const response = await fetch(
-      `${DRIVE_API_BASE}/files?q='${cleanFolderId}'+in+parents&key=${DRIVE_API_KEY}&fields=files(id,name,mimeType,webViewLink,thumbnailLink,hasThumbnail)`
+      `${DRIVE_API_BASE}/files?q='${cleanFolderId}'+in+parents&key=${DRIVE_API_KEY}&fields=files(id,name,mimeType,webViewLink,thumbnailLink,hasThumbnail,size)`
     );
     
     if (!response.ok) {
@@ -14,7 +14,7 @@ export const getFilesFromFolder = async (folderId) => {
     }
     
     const data = await response.json();
-    console.log('Archivos obtenidos:', data.files); // Para debug
+    console.log('Archivos obtenidos:', data.files);
     return data.files || [];
   } catch (error) {
     console.error('Error fetching Drive files:', error);
@@ -23,29 +23,28 @@ export const getFilesFromFolder = async (folderId) => {
 };
 
 export const getFileThumbnail = (file) => {
-  // Si el archivo tiene thumbnailLink proporcionado por Google
+  // Para videos - usar miniatura generada por Google
+  if (file.mimeType?.startsWith('video/')) {
+    return `https://drive.google.com/thumbnail?id=${file.id}&sz=w400-h600`;
+  }
+  
+  // Para imágenes
+  if (file.mimeType?.startsWith('image/')) {
+    return `https://drive.google.com/thumbnail?id=${file.id}&sz=w400-h600`;
+  }
+  
+  // Para PDFs
+  if (file.mimeType?.includes('pdf')) {
+    return `https://drive.google.com/thumbnail?id=${file.id}&sz=w400-h600`;
+  }
+  
+  // Usar thumbnailLink de Google si existe
   if (file.thumbnailLink) {
-    // Modificar el tamaño de la miniatura
     return file.thumbnailLink.replace('=s220', '=s400');
   }
   
-  // Si es una imagen, podemos obtener miniatura directamente
-  if (file.mimeType?.startsWith('image/')) {
-    return `https://drive.google.com/thumbnail?id=${file.id}&sz=w400`;
-  }
-  
-  // Si es un video, intentar obtener miniatura
-  if (file.mimeType?.startsWith('video/')) {
-    return `https://drive.google.com/thumbnail?id=${file.id}&sz=w400`;
-  }
-  
-  // Si es PDF
-  if (file.mimeType?.includes('pdf')) {
-    return `https://drive.google.com/thumbnail?id=${file.id}&sz=w400`;
-  }
-  
-  // Fallback para otros tipos
-  return `https://drive.google.com/thumbnail?id=${file.id}&sz=w400`;
+  // Fallback
+  return `https://drive.google.com/thumbnail?id=${file.id}&sz=w400-h600`;
 };
 
 export const getFileType = (file) => {
@@ -72,14 +71,4 @@ export const extractFolderIdFromUrl = (url) => {
   }
   
   return url;
-};
-
-// Función para verificar si una imagen carga correctamente
-export const checkImageExists = (url) => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(true);
-    img.onerror = () => resolve(false);
-    img.src = url;
-  });
 };

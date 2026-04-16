@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Play, X, Image as ImageIcon, File } from 'lucide-react';
+import { Play, X } from 'lucide-react';
 import { getFilesFromFolder, getFileThumbnail, getFileType } from '../../services/driveService';
 
 const DriveCarousel = ({ folderData, onRemove }) => {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [thumbnailErrors, setThumbnailErrors] = useState({});
 
   useEffect(() => {
     if (folderData?.url) {
@@ -17,10 +16,8 @@ const DriveCarousel = ({ folderData, onRemove }) => {
   const loadFiles = async (url) => {
     setLoading(true);
     setError('');
-    setThumbnailErrors({});
     try {
       const filesList = await getFilesFromFolder(url);
-      console.log('Files loaded:', filesList); // Para debug
       setFiles(filesList);
     } catch (err) {
       setError('Error al cargar archivos');
@@ -30,46 +27,12 @@ const DriveCarousel = ({ folderData, onRemove }) => {
     }
   };
 
-  const truncateFileName = (name, maxLength = 15) => {
+  const truncateFileName = (name, maxLength = 12) => {
     if (!name) return '';
     if (name.length <= maxLength) return name;
     const ext = name.split('.').pop();
     const nameWithoutExt = name.substring(0, name.length - ext.length - 1);
-    return nameWithoutExt.substring(0, maxLength - 3) + '...' + (ext ? '.' + ext : '');
-  };
-
-  const handleThumbnailError = (fileId) => {
-    setThumbnailErrors(prev => ({ ...prev, [fileId]: true }));
-  };
-
-  const getThumbnailWithFallback = (file) => {
-    if (thumbnailErrors[file.id]) {
-      return null;
-    }
-    return getFileThumbnail(file);
-  };
-
-  const getFileIconComponent = (file) => {
-    const type = getFileType(file);
-    if (type === 'video') {
-      return (
-        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-          <Play className="w-8 h-8 text-white" />
-        </div>
-      );
-    }
-    if (type === 'image') {
-      return (
-        <div className="w-full h-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
-          <ImageIcon className="w-8 h-8 text-white" />
-        </div>
-      );
-    }
-    return (
-      <div className="w-full h-full bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center">
-        <File className="w-8 h-8 text-white" />
-      </div>
-    );
+    return nameWithoutExt.substring(0, maxLength - 3) + '...';
   };
 
   if (!folderData?.url) {
@@ -111,64 +74,63 @@ const DriveCarousel = ({ folderData, onRemove }) => {
         ) : (
           <div className="overflow-x-auto pb-1 -mx-3 px-3">
             <div className="flex space-x-3 min-w-max">
-              {files.map((file) => {
-                const thumbnailUrl = getThumbnailWithFallback(file);
-                const hasError = thumbnailErrors[file.id];
-                
-                return (
-                  <a
-                    key={file.id}
-                    href={file.webViewLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-shrink-0 group cursor-pointer"
-                  >
-                    <div className="w-[90px]">
-                      <div className="relative h-[160px] bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                        {!hasError && thumbnailUrl ? (
-                          <>
-                            <img
-                              src={thumbnailUrl}
-                              alt={file.name}
-                              className="w-full h-full object-cover"
-                              onError={() => handleThumbnailError(file.id)}
-                            />
-                            {getFileType(file) === 'video' && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10 group-hover:bg-opacity-20 transition-all">
-                                <div className="bg-white rounded-full p-2 shadow-md">
-                                  <Play className="w-4 h-4 text-blue-600" />
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            {getFileIconComponent(file)}
-                            {getFileType(file) === 'video' && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
-                                <div className="bg-white rounded-full p-2 shadow-md">
-                                  <Play className="w-4 h-4 text-blue-600" />
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                      
-                      <p 
-                        className="mt-1.5 text-xs text-gray-700 truncate text-center"
-                        title={file.name}
-                      >
-                        {truncateFileName(file.name, 12)}
-                      </p>
+              {files.map((file) => (
+                <a
+                  key={file.id}
+                  href={file.webViewLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 group"
+                >
+                  <div className="w-[90px]">
+                    {/* Contenedor de imagen 9:16 */}
+                    <div className="relative h-[160px] bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                      <img
+                        src={getFileThumbnail(file)}
+                        alt={file.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Si falla la miniatura, mostrar un placeholder con ícono
+                          e.target.style.display = 'none';
+                          e.target.parentElement.classList.add('thumbnail-fallback');
+                        }}
+                      />
+                      {getFileType(file) === 'video' && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10 group-hover:bg-opacity-20 transition-all">
+                          <div className="bg-white rounded-full p-2 shadow-md">
+                            <Play className="w-4 h-4 text-blue-600" />
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </a>
-                );
-              })}
+                    
+                    {/* Nombre del archivo */}
+                    <p 
+                      className="mt-1.5 text-xs text-gray-700 text-center truncate"
+                      title={file.name}
+                    >
+                      {truncateFileName(file.name, 12)}
+                    </p>
+                  </div>
+                </a>
+              ))}
             </div>
           </div>
         )}
       </div>
+
+      <style jsx>{`
+        .thumbnail-fallback {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .thumbnail-fallback::after {
+          content: "🎬";
+          font-size: 24px;
+        }
+      `}</style>
     </div>
   );
 };

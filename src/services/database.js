@@ -129,6 +129,34 @@ export const loadEventos = async (userId) => {
   }
 };
 
+// ============== INSUMOS ==============
+const INSUMOS_COLLECTION = 'insumos';
+
+export const saveInsumos = async (userId, insumos) => {
+  try {
+    const docRef = doc(db, INSUMOS_COLLECTION, userId);
+    await setDoc(docRef, { data: insumos }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error('Error saving insumos:', error);
+    return false;
+  }
+};
+
+export const loadInsumos = async (userId) => {
+  try {
+    const docRef = doc(db, INSUMOS_COLLECTION, userId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().data;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error loading insumos:', error);
+    return null;
+  }
+};
+
 // ============== SUSCRIPCIONES EN TIEMPO REAL ==============
 export const subscribeToAllData = (userId, callback) => {
   const unsubscribers = [];

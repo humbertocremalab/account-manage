@@ -1,18 +1,28 @@
 import React, { useState } from 'react';
-import { Calendar, Plus } from 'lucide-react';
+import { Calendar, Plus, Edit } from 'lucide-react';
 import EventList from '../components/eventos/EventList';
 import TareasChecklist from '../components/eventos/TareasChecklist';
 import GastosList from '../components/eventos/GastosList';
 import NewEventPopup from '../components/eventos/NewEventPopup';
+import EditEventPopup from '../components/eventos/EditEventPopup';
 
 const Eventos = () => {
   const [eventos, setEventos] = useState([]);
   const [eventoActivo, setEventoActivo] = useState(null);
   const [showNewEventPopup, setShowNewEventPopup] = useState(false);
+  const [showEditEventPopup, setShowEditEventPopup] = useState(false);
 
   const handleAddEvento = (nuevoEvento) => {
     setEventos(prev => [...prev, nuevoEvento]);
     setEventoActivo(nuevoEvento);
+  };
+
+  const handleUpdateEvento = (eventoActualizado) => {
+    const updatedEventos = eventos.map(ev => 
+      ev.id === eventoActualizado.id ? eventoActualizado : ev
+    );
+    setEventos(updatedEventos);
+    setEventoActivo(eventoActualizado);
   };
 
   const handleSelectEvento = (evento) => {
@@ -142,11 +152,11 @@ const Eventos = () => {
                       </p>
                     </div>
                     <button
-                      onClick={() => setShowNewEventPopup(true)}
+                      onClick={() => setShowEditEventPopup(true)}
                       className="text-sm text-blue-600 hover:text-blue-700 flex items-center"
                     >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Nuevo Evento
+                      <Edit className="w-4 h-4 mr-1" />
+                      Editar
                     </button>
                   </div>
                 </div>
@@ -175,11 +185,18 @@ const Eventos = () => {
         </div>
       )}
 
-      {/* Popup Nuevo Evento */}
+      {/* Popups */}
       <NewEventPopup
         isOpen={showNewEventPopup}
         onClose={() => setShowNewEventPopup(false)}
         onAdd={handleAddEvento}
+      />
+
+      <EditEventPopup
+        isOpen={showEditEventPopup}
+        onClose={() => setShowEditEventPopup(false)}
+        onSave={handleUpdateEvento}
+        evento={eventoActivo}
       />
     </div>
   );

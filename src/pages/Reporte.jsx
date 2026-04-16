@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Download, Calendar, Image } from 'lucide-react';
+import { Calendar, Image } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getAllDataForReport } from '../services/database';
 import html2canvas from 'html2canvas';
@@ -70,23 +70,18 @@ const Reporte = () => {
     console.log('Generating image...');
     
     try {
-      // Pequeño delay para asegurar que todo esté renderizado
       await new Promise(resolve => setTimeout(resolve, 100));
       
       const canvas = await html2canvas(reportRef.current, {
         scale: 2,
         backgroundColor: '#ffffff',
-        logging: true,
+        logging: false,
         allowTaint: false,
         useCORS: true,
-        onclone: (clonedDoc) => {
-          console.log('Document cloned for capture');
-        }
       });
       
       console.log('Canvas created:', canvas.width, 'x', canvas.height);
       
-      // Convertir a blob y descargar
       canvas.toBlob((blob) => {
         if (blob) {
           const url = URL.createObjectURL(blob);
@@ -97,8 +92,6 @@ const Reporte = () => {
           URL.revokeObjectURL(url);
           console.log('Image downloaded successfully');
         } else {
-          console.error('Failed to create blob');
-          // Fallback: usar dataURL
           const link = document.createElement('a');
           link.download = `Reporte_${months[selectedMonth]}_${selectedYear}.png`;
           link.href = canvas.toDataURL('image/png');
@@ -108,7 +101,7 @@ const Reporte = () => {
       
     } catch (error) {
       console.error('Error generating image:', error);
-      alert('Error al generar la imagen: ' + error.message);
+      alert('Error al generar la imagen. Intenta de nuevo.');
     } finally {
       setGeneratingImage(false);
     }
@@ -152,6 +145,7 @@ const Reporte = () => {
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+              style={{ backgroundColor: '#ffffff' }}
             >
               {months.map((month, index) => (
                 <option key={month} value={index}>{month}</option>
@@ -162,6 +156,7 @@ const Reporte = () => {
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+              style={{ backgroundColor: '#ffffff' }}
             >
               {years.map(year => (
                 <option key={year} value={year}>{year}</option>
@@ -172,7 +167,8 @@ const Reporte = () => {
           <button
             onClick={generateImage}
             disabled={generatingImage}
-            className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm disabled:bg-green-400 disabled:cursor-not-allowed"
+            className="flex items-center px-4 py-2 text-white rounded-lg transition-colors text-sm"
+            style={{ backgroundColor: generatingImage ? '#9CA3AF' : '#16A34A' }}
           >
             {generatingImage ? (
               <>
@@ -189,88 +185,92 @@ const Reporte = () => {
         </div>
       </div>
 
-      {/* Contenido del reporte (se capturará como imagen) */}
+      {/* Contenido del reporte - con estilos inline para evitar oklch */}
       <div 
         ref={reportRef} 
-        className="bg-white rounded-xl p-6" 
-        style={{ backgroundColor: '#ffffff' }}
+        style={{ 
+          backgroundColor: '#ffffff',
+          borderRadius: '12px',
+          padding: '24px',
+          fontFamily: 'system-ui, -apple-system, sans-serif'
+        }}
       >
         {/* Header del reporte */}
-        <div className="border-b border-gray-200 pb-4 mb-6">
-          <h3 className="text-xl font-bold text-gray-800">Account Manager</h3>
-          <p className="text-gray-600">
+        <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '16px', marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1F2937', marginBottom: '4px' }}>Account Manager</h3>
+          <p style={{ color: '#4B5563', marginBottom: '4px' }}>
             Reporte Mensual - {months[selectedMonth]} {selectedYear}
           </p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p style={{ fontSize: '12px', color: '#9CA3AF' }}>
             Generado: {new Date().toLocaleDateString('es-ES')}
           </p>
         </div>
 
         {/* KPIs Generales */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-            <p className="text-xs text-blue-600 mb-1">Total Leads Meta</p>
-            <p className="text-2xl font-bold text-blue-700">{totalLeadsMeta.toLocaleString()}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+          <div style={{ backgroundColor: '#EFF6FF', borderRadius: '8px', padding: '16px', border: '1px solid #DBEAFE' }}>
+            <p style={{ fontSize: '12px', color: '#2563EB', marginBottom: '4px' }}>Total Leads Meta</p>
+            <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#1D4ED8' }}>{totalLeadsMeta.toLocaleString()}</p>
           </div>
-          <div className="bg-green-50 rounded-lg p-4 border border-green-100">
-            <p className="text-xs text-green-600 mb-1">Total Leads Generados</p>
-            <p className="text-2xl font-bold text-green-700">{totalLeadsGenerados.toLocaleString()}</p>
-            <p className="text-xs text-green-500 mt-1">
+          <div style={{ backgroundColor: '#F0FDF4', borderRadius: '8px', padding: '16px', border: '1px solid #DCFCE7' }}>
+            <p style={{ fontSize: '12px', color: '#16A34A', marginBottom: '4px' }}>Total Leads Generados</p>
+            <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#15803D' }}>{totalLeadsGenerados.toLocaleString()}</p>
+            <p style={{ fontSize: '12px', color: '#22C55E', marginTop: '4px' }}>
               {totalLeadsMeta > 0 ? ((totalLeadsGenerados / totalLeadsMeta) * 100).toFixed(1) : '0.0'}% del meta
             </p>
           </div>
-          <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
-            <p className="text-xs text-purple-600 mb-1">Total Presupuesto</p>
-            <p className="text-2xl font-bold text-purple-700">${totalPresupuesto.toLocaleString()}</p>
+          <div style={{ backgroundColor: '#F5F3FF', borderRadius: '8px', padding: '16px', border: '1px solid #EDE9FE' }}>
+            <p style={{ fontSize: '12px', color: '#7C3AED', marginBottom: '4px' }}>Total Presupuesto</p>
+            <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#6D28D9' }}>${totalPresupuesto.toLocaleString()}</p>
           </div>
-          <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-100">
-            <p className="text-xs text-yellow-600 mb-1">Total Gasto</p>
-            <p className="text-2xl font-bold text-yellow-700">${totalGasto.toLocaleString()}</p>
-            <p className="text-xs text-yellow-500 mt-1">
+          <div style={{ backgroundColor: '#FEFCE8', borderRadius: '8px', padding: '16px', border: '1px solid #FEF08A' }}>
+            <p style={{ fontSize: '12px', color: '#CA8A04', marginBottom: '4px' }}>Total Gasto</p>
+            <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#A16207' }}>${totalGasto.toLocaleString()}</p>
+            <p style={{ fontSize: '12px', color: '#EAB308', marginTop: '4px' }}>
               {totalPresupuesto > 0 ? ((totalGasto / totalPresupuesto) * 100).toFixed(1) : '0.0'}% del presupuesto
             </p>
           </div>
         </div>
 
         {/* Tabla de métricas por sucursal */}
-        <div className="mb-6">
-          <h4 className="font-semibold text-gray-800 mb-3">Métricas por Sucursal</h4>
-          <table className="w-full border border-gray-200 rounded-lg overflow-hidden">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-gray-200">Métrica</th>
+        <div style={{ marginBottom: '24px' }}>
+          <h4 style={{ fontWeight: '600', color: '#1F2937', marginBottom: '12px' }}>Métricas por Sucursal</h4>
+          <table style={{ width: '100%', border: '1px solid #E5E7EB', borderRadius: '8px', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#F3F4F6' }}>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '500', color: '#4B5563', borderBottom: '1px solid #E5E7EB' }}>Métrica</th>
                 {sucursales.map(s => (
-                  <th key={s} className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-gray-200">
+                  <th key={s} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '500', color: '#4B5563', borderBottom: '1px solid #E5E7EB' }}>
                     {sucursalLabels[s]}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody>
               <tr>
-                <td className="px-4 py-3 text-sm text-gray-800 font-medium bg-gray-50">Leads Meta</td>
+                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', fontWeight: '500', backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>Leads Meta</td>
                 {sucursales.map(s => (
-                  <td key={s} className="px-4 py-3 text-sm text-gray-800">
+                  <td key={s} style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', borderBottom: '1px solid #E5E7EB' }}>
                     {getMetricasSucursal(s).leadsMeta.toLocaleString()}
                   </td>
                 ))}
               </tr>
               <tr>
-                <td className="px-4 py-3 text-sm text-gray-800 font-medium bg-gray-50">Leads Generados</td>
+                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', fontWeight: '500', backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>Leads Generados</td>
                 {sucursales.map(s => (
-                  <td key={s} className="px-4 py-3 text-sm text-gray-800">
+                  <td key={s} style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', borderBottom: '1px solid #E5E7EB' }}>
                     {getMetricasSucursal(s).leadsGenerados.toLocaleString()}
                   </td>
                 ))}
               </tr>
               <tr>
-                <td className="px-4 py-3 text-sm text-gray-800 font-medium bg-gray-50">Avance</td>
+                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', fontWeight: '500', backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>Avance</td>
                 {sucursales.map(s => {
                   const m = getMetricasSucursal(s);
                   const p = m.leadsMeta > 0 ? ((m.leadsGenerados / m.leadsMeta) * 100).toFixed(1) : '0.0';
                   return (
-                    <td key={s} className="px-4 py-3 text-sm">
-                      <span className={`font-medium ${parseFloat(p) >= 50 ? 'text-green-600' : 'text-yellow-600'}`}>
+                    <td key={s} style={{ padding: '12px 16px', fontSize: '14px', borderBottom: '1px solid #E5E7EB' }}>
+                      <span style={{ fontWeight: '500', color: parseFloat(p) >= 50 ? '#16A34A' : '#CA8A04' }}>
                         {p}%
                       </span>
                     </td>
@@ -278,29 +278,29 @@ const Reporte = () => {
                 })}
               </tr>
               <tr>
-                <td className="px-4 py-3 text-sm text-gray-800 font-medium bg-gray-50">Presupuesto</td>
+                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', fontWeight: '500', backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>Presupuesto</td>
                 {sucursales.map(s => (
-                  <td key={s} className="px-4 py-3 text-sm text-gray-800">
+                  <td key={s} style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', borderBottom: '1px solid #E5E7EB' }}>
                     ${getMetricasSucursal(s).presupuesto.toLocaleString()}
                   </td>
                 ))}
               </tr>
               <tr>
-                <td className="px-4 py-3 text-sm text-gray-800 font-medium bg-gray-50">Gasto</td>
+                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', fontWeight: '500', backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>Gasto</td>
                 {sucursales.map(s => (
-                  <td key={s} className="px-4 py-3 text-sm text-gray-800">
+                  <td key={s} style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', borderBottom: '1px solid #E5E7EB' }}>
                     ${getMetricasSucursal(s).gasto.toLocaleString()}
                   </td>
                 ))}
               </tr>
               <tr>
-                <td className="px-4 py-3 text-sm text-gray-800 font-medium bg-gray-50">% Gasto</td>
+                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', fontWeight: '500', backgroundColor: '#F9FAFB' }}>% Gasto</td>
                 {sucursales.map(s => {
                   const m = getMetricasSucursal(s);
                   const p = m.presupuesto > 0 ? ((m.gasto / m.presupuesto) * 100).toFixed(1) : '0.0';
                   return (
-                    <td key={s} className="px-4 py-3 text-sm">
-                      <span className={`font-medium ${parseFloat(p) > 80 ? 'text-red-600' : 'text-gray-800'}`}>
+                    <td key={s} style={{ padding: '12px 16px', fontSize: '14px' }}>
+                      <span style={{ fontWeight: '500', color: parseFloat(p) > 80 ? '#DC2626' : '#1F2937' }}>
                         {p}%
                       </span>
                     </td>
@@ -312,73 +312,77 @@ const Reporte = () => {
         </div>
 
         {/* Resumen adicional */}
-        <div className="grid grid-cols-4 gap-4">
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <h4 className="font-semibold text-gray-800 mb-2 text-sm">Eventos</h4>
-            <p className="text-2xl font-bold text-gray-800">{reportData?.eventos?.length || 0}</p>
-            <p className="text-xs text-gray-500 mt-1">Total de eventos</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+          <div style={{ backgroundColor: '#F9FAFB', borderRadius: '8px', padding: '16px', border: '1px solid #E5E7EB' }}>
+            <h4 style={{ fontWeight: '600', color: '#1F2937', marginBottom: '8px', fontSize: '14px' }}>Eventos</h4>
+            <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#1F2937' }}>{reportData?.eventos?.length || 0}</p>
+            <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>Total de eventos</p>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <h4 className="font-semibold text-gray-800 mb-2 text-sm">Insumos</h4>
-            <div className="space-y-1">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Activos:</span>
-                <span className="font-medium text-green-600">
+          <div style={{ backgroundColor: '#F9FAFB', borderRadius: '8px', padding: '16px', border: '1px solid #E5E7EB' }}>
+            <h4 style={{ fontWeight: '600', color: '#1F2937', marginBottom: '8px', fontSize: '14px' }}>Insumos</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                <span style={{ color: '#4B5563' }}>Activos:</span>
+                <span style={{ fontWeight: '500', color: '#16A34A' }}>
                   {reportData?.insumos?.filter(i => i.estado === 'activo').length || 0}
                 </span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Por vencer:</span>
-                <span className="font-medium text-yellow-600">
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                <span style={{ color: '#4B5563' }}>Por vencer:</span>
+                <span style={{ fontWeight: '500', color: '#CA8A04' }}>
                   {reportData?.insumos?.filter(i => i.estado === 'por_vencer').length || 0}
                 </span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Vencidos:</span>
-                <span className="font-medium text-red-600">
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                <span style={{ color: '#4B5563' }}>Vencidos:</span>
+                <span style={{ fontWeight: '500', color: '#DC2626' }}>
                   {reportData?.insumos?.filter(i => i.estado === 'vencido').length || 0}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <h4 className="font-semibold text-gray-800 mb-2 text-sm">Tareas Express</h4>
-            <p className="text-2xl font-bold text-gray-800">
+          <div style={{ backgroundColor: '#F9FAFB', borderRadius: '8px', padding: '16px', border: '1px solid #E5E7EB' }}>
+            <h4 style={{ fontWeight: '600', color: '#1F2937', marginBottom: '8px', fontSize: '14px' }}>Tareas Express</h4>
+            <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#1F2937' }}>
               {tareasStats.completadas}/{tareasStats.total}
             </p>
-            <p className="text-xs text-gray-500 mt-1">Tareas completadas</p>
-            <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+            <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>Tareas completadas</p>
+            <div style={{ marginTop: '8px', height: '6px', backgroundColor: '#E5E7EB', borderRadius: '9999px', overflow: 'hidden' }}>
               <div 
-                className="h-full bg-green-600 rounded-full"
-                style={{ width: `${tareasStats.total > 0 ? (tareasStats.completadas / tareasStats.total) * 100 : 0}%` }}
+                style={{ 
+                  height: '100%', 
+                  backgroundColor: '#16A34A', 
+                  borderRadius: '9999px',
+                  width: `${tareasStats.total > 0 ? (tareasStats.completadas / tareasStats.total) * 100 : 0}%` 
+                }}
               />
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <h4 className="font-semibold text-gray-800 mb-2 text-sm">Checklist Embudo</h4>
-            <div className="space-y-1">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Awareness:</span>
-                <span className="font-medium">{awarenessCompleted}/{awareness.length}</span>
+          <div style={{ backgroundColor: '#F9FAFB', borderRadius: '8px', padding: '16px', border: '1px solid #E5E7EB' }}>
+            <h4 style={{ fontWeight: '600', color: '#1F2937', marginBottom: '8px', fontSize: '14px' }}>Checklist Embudo</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                <span style={{ color: '#4B5563' }}>Awareness:</span>
+                <span style={{ fontWeight: '500' }}>{awarenessCompleted}/{awareness.length}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Prospección:</span>
-                <span className="font-medium">{prospeccionCompleted}/{prospeccion.length}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                <span style={{ color: '#4B5563' }}>Prospección:</span>
+                <span style={{ fontWeight: '500' }}>{prospeccionCompleted}/{prospeccion.length}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Retargeting:</span>
-                <span className="font-medium">{retargetingCompleted}/{retargeting.length}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                <span style={{ color: '#4B5563' }}>Retargeting:</span>
+                <span style={{ fontWeight: '500' }}>{retargetingCompleted}/{retargeting.length}</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="mt-6 pt-4 border-t border-gray-200 text-center">
-          <p className="text-xs text-gray-400">Account Manager - Reporte generado automáticamente</p>
+        <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #E5E7EB', textAlign: 'center' }}>
+          <p style={{ fontSize: '12px', color: '#9CA3AF' }}>Account Manager - Reporte generado automáticamente</p>
         </div>
       </div>
     </div>

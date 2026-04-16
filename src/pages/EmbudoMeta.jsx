@@ -5,7 +5,7 @@ import ChecklistSection from '../components/dashboard/ChecklistSection';
 import DriveCarousel from '../components/dashboard/DriveCarousel';
 import EditMetricsPopup from '../components/dashboard/EditMetricsPopup';
 import AddDriveFolderPopup from '../components/dashboard/AddDriveFolderPopup';
-import { Edit, Plus, FolderOpen } from 'lucide-react';
+
 
 const EmbudoMeta = () => {
   const [sucursalActiva, setSucursalActiva] = useState('monterrey');

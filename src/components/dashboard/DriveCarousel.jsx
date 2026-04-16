@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, X } from 'lucide-react';
+import { Play, X, Film, Image, File } from 'lucide-react';
 import { getFilesFromFolder, getFileThumbnail, getFileType } from '../../services/driveService';
 
 const DriveCarousel = ({ folderData, onRemove }) => {
@@ -19,6 +19,9 @@ const DriveCarousel = ({ folderData, onRemove }) => {
     try {
       const filesList = await getFilesFromFolder(url);
       setFiles(filesList);
+      if (filesList.length === 0) {
+        setError('No se encontraron archivos');
+      }
     } catch (err) {
       setError('Error al cargar archivos');
       console.error(err);
@@ -27,12 +30,51 @@ const DriveCarousel = ({ folderData, onRemove }) => {
     }
   };
 
-  const truncateFileName = (name, maxLength = 12) => {
+  const truncateFileName = (name, maxLength = 13) => {
     if (!name) return '';
-    if (name.length <= maxLength) return name;
-    const ext = name.split('.').pop();
-    const nameWithoutExt = name.substring(0, name.length - ext.length - 1);
+    const nameWithoutExt = name.replace(/\.(mp4|mov|avi|mkv|jpg|jpeg|png|gif|pdf)$/i, '');
+    if (nameWithoutExt.length <= maxLength) return nameWithoutExt;
     return nameWithoutExt.substring(0, maxLength - 3) + '...';
+  };
+
+  const FileThumbnail = ({ file }) => {
+    const [imgError, setImgError] = useState(false);
+    const fileType = getFileType(file);
+    const thumbnailUrl = getFileThumbnail(file);
+
+    if (imgError) {
+      // Fallback visual cuando la miniatura no carga
+      return (
+        <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex flex-col items-center justify-center">
+          {fileType === 'video' && <Film className="w-6 h-6 text-gray-400 mb-1" />}
+          {fileType === 'image' && <Image className="w-6 h-6 text-gray-400 mb-1" />}
+          {fileType === 'file' && <File className="w-6 h-6 text-gray-400 mb-1" />}
+          <span className="text-[9px] text-gray-400 text-center px-1">
+            {fileType === 'video' ? 'Video' : fileType === 'image' ? 'Imagen' : 'Archivo'}
+          </span>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <img
+          src={thumbnailUrl}
+          alt={file.name}
+          className="w-full h-full object-cover"
+          onError={() => setImgError(true)}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+        />
+        {fileType === 'video' && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-all">
+            <div className="bg-white/90 rounded-full p-2 shadow-lg">
+              <Play className="w-4 h-4 text-blue-600" />
+            </div>
+          </div>
+        )}
+      </>
+    );
   };
 
   if (!folderData?.url) {
@@ -42,9 +84,9 @@ const DriveCarousel = ({ folderData, onRemove }) => {
   return (
     <div className="bg-white rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="px-3 py-2 flex items-center justify-between">
+      <div className="px-3 py-2 flex items-center justify-between border-b border-gray-100">
         <h4 className="font-medium text-gray-800 text-sm">
-          {folderData.nombre} <span className="text-gray-400 font-normal">({folderData.categoria})</span>
+          {folderData.nombre} <span className="text-gray-400 font-normal text-xs">({folderData.categoria})</span>
         </h4>
         {onRemove && (
           <button
@@ -52,20 +94,26 @@ const DriveCarousel = ({ folderData, onRemove }) => {
             className="p-1 text-gray-400 hover:text-red-500 transition-colors rounded"
             title="Eliminar carpeta"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
 
       {/* Lista de archivos */}
-      <div className="px-3 pb-3">
+      <div className="px-3 py-3">
         {loading ? (
           <div className="py-8 flex items-center justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
           </div>
         ) : error ? (
-          <div className="py-8 text-center text-red-500 text-xs">
-            {error}
+          <div className="py-8 text-center">
+            <p className="text-red-500 text-xs mb-2">{error}</p>
+            <button 
+              onClick={() => loadFiles(folderData.url)}
+              className="text-xs text-blue-600 hover:text-blue-700"
+            >
+              Reintentar
+            </button>
           </div>
         ) : files.length === 0 ? (
           <div className="py-8 text-center text-gray-500 text-xs">
@@ -73,64 +121,33 @@ const DriveCarousel = ({ folderData, onRemove }) => {
           </div>
         ) : (
           <div className="overflow-x-auto pb-1 -mx-3 px-3">
-            <div className="flex space-x-3 min-w-max">
+            <div className="flex gap-3 min-w-max">
               {files.map((file) => (
                 <a
                   key={file.id}
                   href={file.webViewLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-shrink-0 group"
+                  className="flex-shrink-0 group w-[90px]"
                 >
-                  <div className="w-[90px]">
-                    {/* Contenedor de imagen 9:16 */}
-                    <div className="relative h-[160px] bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                      <img
-                        src={getFileThumbnail(file)}
-                        alt={file.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // Si falla la miniatura, mostrar un placeholder con ícono
-                          e.target.style.display = 'none';
-                          e.target.parentElement.classList.add('thumbnail-fallback');
-                        }}
-                      />
-                      {getFileType(file) === 'video' && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10 group-hover:bg-opacity-20 transition-all">
-                          <div className="bg-white rounded-full p-2 shadow-md">
-                            <Play className="w-4 h-4 text-blue-600" />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Nombre del archivo */}
-                    <p 
-                      className="mt-1.5 text-xs text-gray-700 text-center truncate"
-                      title={file.name}
-                    >
-                      {truncateFileName(file.name, 12)}
-                    </p>
+                  {/* Miniatura 9:16 */}
+                  <div className="relative h-[160px] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                    <FileThumbnail file={file} />
                   </div>
+                  
+                  {/* Nombre del archivo */}
+                  <p 
+                    className="mt-1.5 text-[11px] text-gray-700 text-center truncate font-medium"
+                    title={file.name}
+                  >
+                    {truncateFileName(file.name, 12)}
+                  </p>
                 </a>
               ))}
             </div>
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        .thumbnail-fallback {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .thumbnail-fallback::after {
-          content: "🎬";
-          font-size: 24px;
-        }
-      `}</style>
     </div>
   );
 };

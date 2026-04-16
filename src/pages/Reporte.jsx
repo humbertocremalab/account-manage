@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Image } from 'lucide-react';
+import { Calendar, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getAllDataForReport } from '../services/database';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const Reporte = () => {
   const { user } = useAuth();
@@ -10,7 +11,7 @@ const Reporte = () => {
   const [reportData, setReportData] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
-  const [generatingImage, setGeneratingImage] = useState(false);
+  const [generatingPDF, setGeneratingPDF] = useState(false);
   const reportRef = useRef(null);
 
   const months = [
@@ -60,18 +61,19 @@ const Reporte = () => {
     return { total, completadas };
   };
 
-  const generateImage = async () => {
+  const generatePDF = async () => {
     if (!reportRef.current) {
       console.error('Report ref is null');
       return;
     }
     
-    setGeneratingImage(true);
-    console.log('Generating image...');
+    setGeneratingPDF(true);
+    console.log('Generando PDF...');
     
     try {
       await new Promise(resolve => setTimeout(resolve, 100));
       
+      // Capturar el contenido como imagen
       const canvas = await html2canvas(reportRef.current, {
         scale: 2,
         backgroundColor: '#ffffff',
@@ -80,30 +82,49 @@ const Reporte = () => {
         useCORS: true,
       });
       
-      console.log('Canvas created:', canvas.width, 'x', canvas.height);
+      console.log('Canvas creado:', canvas.width, 'x', canvas.height);
       
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.download = `Reporte_${months[selectedMonth]}_${selectedYear}.png`;
-          link.href = url;
-          link.click();
-          URL.revokeObjectURL(url);
-          console.log('Image downloaded successfully');
-        } else {
-          const link = document.createElement('a');
-          link.download = `Reporte_${months[selectedMonth]}_${selectedYear}.png`;
-          link.href = canvas.toDataURL('image/png');
-          link.click();
-        }
-      }, 'image/png');
+      // Crear PDF
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Configurar PDF (orientación vertical, mm)
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      // Dimensiones de página A4
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      // Calcular altura de la imagen proporcional al ancho
+      const imgWidth = pageWidth - 20; // márgenes de 10mm a cada lado
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      // Agregar imagen al PDF
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      
+      // Si el contenido es más alto que una página, agregar más páginas
+      let heightLeft = imgHeight;
+      let position = 10;
+      
+      while (heightLeft > pageHeight - 20) {
+        position = heightLeft - (pageHeight - 20);
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, -position + 10, imgWidth, imgHeight);
+        heightLeft -= (pageHeight - 20);
+      }
+      
+      // Descargar PDF
+      pdf.save(`Reporte_${months[selectedMonth]}_${selectedYear}.pdf`);
+      console.log('PDF descargado exitosamente');
       
     } catch (error) {
-      console.error('Error generating image:', error);
-      alert('Error al generar la imagen. Intenta de nuevo.');
+      console.error('Error generando PDF:', error);
+      alert('Error al generar el PDF. Intenta de nuevo.');
     } finally {
-      setGeneratingImage(false);
+      setGeneratingPDF(false);
     }
   };
 
@@ -131,10 +152,12 @@ const Reporte = () => {
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">Reporte Mensual</h2>
-      <p className="text-gray-600 text-sm mb-6">
-        Resumen de todas las áreas por mes
-      </p>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Reporte Mensual</h2>
+        <p className="text-gray-600 text-sm">
+          Resumen de todas las áreas por mes
+        </p>
+      </div>
 
       {/* Selector de mes y año */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
@@ -165,20 +188,20 @@ const Reporte = () => {
           </div>
 
           <button
-            onClick={generateImage}
-            disabled={generatingImage}
+            onClick={generatePDF}
+            disabled={generatingPDF}
             className="flex items-center px-4 py-2 text-white rounded-lg transition-colors text-sm"
-            style={{ backgroundColor: generatingImage ? '#9CA3AF' : '#16A34A' }}
+            style={{ backgroundColor: generatingPDF ? '#9CA3AF' : '#DC2626' }}
           >
-            {generatingImage ? (
+            {generatingPDF ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 Generando...
               </>
             ) : (
               <>
-                <Image className="w-4 h-4 mr-2" />
-                Descargar Imagen (.png)
+                <FileText className="w-4 h-4 mr-2" />
+                Descargar PDF
               </>
             )}
           </button>
@@ -196,14 +219,20 @@ const Reporte = () => {
         }}
       >
         {/* Header del reporte */}
-        <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '16px', marginBottom: '24px' }}>
-          <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1F2937', marginBottom: '4px' }}>Account Manager</h3>
-          <p style={{ color: '#4B5563', marginBottom: '4px' }}>
-            Reporte Mensual - {months[selectedMonth]} {selectedYear}
-          </p>
-          <p style={{ fontSize: '12px', color: '#9CA3AF' }}>
-            Generado: {new Date().toLocaleDateString('es-ES')}
-          </p>
+        <div style={{ borderBottom: '2px solid #2563EB', paddingBottom: '16px', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1F2937', marginBottom: '4px' }}>Account Manager</h3>
+              <p style={{ color: '#4B5563', fontSize: '16px' }}>
+                Reporte Mensual - {months[selectedMonth]} {selectedYear}
+              </p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ fontSize: '12px', color: '#9CA3AF' }}>
+                Generado: {new Date().toLocaleDateString('es-ES')}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* KPIs Generales */}
@@ -234,13 +263,13 @@ const Reporte = () => {
 
         {/* Tabla de métricas por sucursal */}
         <div style={{ marginBottom: '24px' }}>
-          <h4 style={{ fontWeight: '600', color: '#1F2937', marginBottom: '12px' }}>Métricas por Sucursal</h4>
+          <h4 style={{ fontWeight: '600', color: '#1F2937', marginBottom: '12px', fontSize: '16px' }}>Métricas por Sucursal</h4>
           <table style={{ width: '100%', border: '1px solid #E5E7EB', borderRadius: '8px', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ backgroundColor: '#F3F4F6' }}>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '500', color: '#4B5563', borderBottom: '1px solid #E5E7EB' }}>Métrica</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#4B5563', borderBottom: '1px solid #E5E7EB' }}>Métrica</th>
                 {sucursales.map(s => (
-                  <th key={s} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '500', color: '#4B5563', borderBottom: '1px solid #E5E7EB' }}>
+                  <th key={s} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#4B5563', borderBottom: '1px solid #E5E7EB' }}>
                     {sucursalLabels[s]}
                   </th>
                 ))}
@@ -312,7 +341,7 @@ const Reporte = () => {
         </div>
 
         {/* Resumen adicional */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginTop: '24px' }}>
           <div style={{ backgroundColor: '#F9FAFB', borderRadius: '8px', padding: '16px', border: '1px solid #E5E7EB' }}>
             <h4 style={{ fontWeight: '600', color: '#1F2937', marginBottom: '8px', fontSize: '14px' }}>Eventos</h4>
             <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#1F2937' }}>{reportData?.eventos?.length || 0}</p>

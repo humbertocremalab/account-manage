@@ -57,7 +57,7 @@ const EmbudoMeta = () => {
       setLoading(true);
       try {
         // Cargar métricas del mes seleccionado
-        const savedMetrics = await loadMetrics(user.uid, selectedMonth, selectedYear);
+        const savedMetrics = await loadMetrics(selectedMonth, selectedYear);
         if (savedMetrics) {
           setMetrics(savedMetrics);
         } else {
@@ -116,7 +116,7 @@ const EmbudoMeta = () => {
     };
     setMetrics(updatedMetrics);
     if (user) {
-      await saveMetrics(user.uid, selectedMonth, selectedYear, updatedMetrics);
+      await saveMetrics(selectedMonth, selectedYear, updatedMetrics);
     }
   };
 
@@ -136,7 +136,7 @@ const EmbudoMeta = () => {
     setChecklists(newChecklists);
     
     if (user) {
-      await saveChecklists(user.uid, selectedMonth, selectedYear, newChecklists);
+      await saveChecklists(selectedMonth, selectedYear, newChecklists);
     }
   };
 
@@ -152,7 +152,7 @@ const EmbudoMeta = () => {
     setDriveFolders(newFolders);
     
     if (user) {
-      await saveDriveFolders(user.uid, newFolders);
+      await saveDriveFolders(newFolders);
     }
   };
 
@@ -164,7 +164,7 @@ const EmbudoMeta = () => {
     setDriveFolders(newFolders);
     
     if (user) {
-      await saveDriveFolders(user.uid, newFolders);
+      await saveDriveFolders(newFolders);
     }
   };
 

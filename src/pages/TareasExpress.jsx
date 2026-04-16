@@ -35,7 +35,7 @@ const TareasExpress = () => {
 
   const saveTareasToDB = async (updatedTareas) => {
     if (user) {
-      await saveTareasExpress(user.uid, updatedTareas);
+      await saveTareasExpress(updatedTareas);
     }
   };
 

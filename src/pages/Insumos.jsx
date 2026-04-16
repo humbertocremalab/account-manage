@@ -35,7 +35,7 @@ const Insumos = () => {
 
   const saveInsumosToDB = async (updatedInsumos) => {
     if (user) {
-      await saveInsumos(user.uid, updatedInsumos);
+      await saveInsumos(updatedInsumos);
     }
   };
 

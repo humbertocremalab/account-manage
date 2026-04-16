@@ -4,9 +4,13 @@ import {
   doc, 
   setDoc, 
   getDoc, 
-  updateDoc,
-  onSnapshot 
+  getDocs,
+  query,
+  where
 } from 'firebase/firestore';
+
+// ID de la organización (puede ser fijo para todos)
+const ORG_ID = 'default-org';
 
 // Colecciones
 const METRICS_COLLECTION = 'metrics';
@@ -15,13 +19,14 @@ const DRIVE_FOLDERS_COLLECTION = 'driveFolders';
 const EVENTOS_COLLECTION = 'eventos';
 const INSUMOS_COLLECTION = 'insumos';
 const TAREAS_EXPRESS_COLLECTION = 'tareasExpress';
+const USER_ROLES_COLLECTION = 'userRoles';
 
-// ============== MÉTRICAS (por mes) ==============
-export const saveMetrics = async (userId, month, year, metrics) => {
+// ============== MÉTRICAS (compartidas por organización y mes) ==============
+export const saveMetrics = async (month, year, metrics) => {
   try {
-    const docRef = doc(db, METRICS_COLLECTION, `${userId}_${year}_${month}`);
+    const docRef = doc(db, METRICS_COLLECTION, `${ORG_ID}_${year}_${month}`);
     await setDoc(docRef, { 
-      userId,
+      orgId: ORG_ID,
       month,
       year,
       data: metrics 
@@ -33,9 +38,9 @@ export const saveMetrics = async (userId, month, year, metrics) => {
   }
 };
 
-export const loadMetrics = async (userId, month, year) => {
+export const loadMetrics = async (month, year) => {
   try {
-    const docRef = doc(db, METRICS_COLLECTION, `${userId}_${year}_${month}`);
+    const docRef = doc(db, METRICS_COLLECTION, `${ORG_ID}_${year}_${month}`);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       return docSnap.data().data;
@@ -47,12 +52,12 @@ export const loadMetrics = async (userId, month, year) => {
   }
 };
 
-// ============== CHECKLISTS (por mes) ==============
-export const saveChecklists = async (userId, month, year, checklists) => {
+// ============== CHECKLISTS (compartidas por organización y mes) ==============
+export const saveChecklists = async (month, year, checklists) => {
   try {
-    const docRef = doc(db, CHECKLISTS_COLLECTION, `${userId}_${year}_${month}`);
+    const docRef = doc(db, CHECKLISTS_COLLECTION, `${ORG_ID}_${year}_${month}`);
     await setDoc(docRef, { 
-      userId,
+      orgId: ORG_ID,
       month,
       year,
       data: checklists 
@@ -64,9 +69,9 @@ export const saveChecklists = async (userId, month, year, checklists) => {
   }
 };
 
-export const loadChecklists = async (userId, month, year) => {
+export const loadChecklists = async (month, year) => {
   try {
-    const docRef = doc(db, CHECKLISTS_COLLECTION, `${userId}_${year}_${month}`);
+    const docRef = doc(db, CHECKLISTS_COLLECTION, `${ORG_ID}_${year}_${month}`);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       return docSnap.data().data;
@@ -78,10 +83,10 @@ export const loadChecklists = async (userId, month, year) => {
   }
 };
 
-// ============== DRIVE FOLDERS ==============
-export const saveDriveFolders = async (userId, folders) => {
+// ============== DRIVE FOLDERS (compartidas) ==============
+export const saveDriveFolders = async (folders) => {
   try {
-    const docRef = doc(db, DRIVE_FOLDERS_COLLECTION, userId);
+    const docRef = doc(db, DRIVE_FOLDERS_COLLECTION, ORG_ID);
     await setDoc(docRef, { data: folders }, { merge: true });
     return true;
   } catch (error) {
@@ -90,9 +95,9 @@ export const saveDriveFolders = async (userId, folders) => {
   }
 };
 
-export const loadDriveFolders = async (userId) => {
+export const loadDriveFolders = async () => {
   try {
-    const docRef = doc(db, DRIVE_FOLDERS_COLLECTION, userId);
+    const docRef = doc(db, DRIVE_FOLDERS_COLLECTION, ORG_ID);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       return docSnap.data().data;
@@ -104,10 +109,10 @@ export const loadDriveFolders = async (userId) => {
   }
 };
 
-// ============== EVENTOS ==============
-export const saveEventos = async (userId, eventos) => {
+// ============== EVENTOS (compartidos) ==============
+export const saveEventos = async (eventos) => {
   try {
-    const docRef = doc(db, EVENTOS_COLLECTION, userId);
+    const docRef = doc(db, EVENTOS_COLLECTION, ORG_ID);
     await setDoc(docRef, { data: eventos }, { merge: true });
     return true;
   } catch (error) {
@@ -116,9 +121,9 @@ export const saveEventos = async (userId, eventos) => {
   }
 };
 
-export const loadEventos = async (userId) => {
+export const loadEventos = async () => {
   try {
-    const docRef = doc(db, EVENTOS_COLLECTION, userId);
+    const docRef = doc(db, EVENTOS_COLLECTION, ORG_ID);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       return docSnap.data().data;
@@ -130,10 +135,10 @@ export const loadEventos = async (userId) => {
   }
 };
 
-// ============== INSUMOS ==============
-export const saveInsumos = async (userId, insumos) => {
+// ============== INSUMOS (compartidos) ==============
+export const saveInsumos = async (insumos) => {
   try {
-    const docRef = doc(db, INSUMOS_COLLECTION, userId);
+    const docRef = doc(db, INSUMOS_COLLECTION, ORG_ID);
     await setDoc(docRef, { data: insumos }, { merge: true });
     return true;
   } catch (error) {
@@ -142,9 +147,9 @@ export const saveInsumos = async (userId, insumos) => {
   }
 };
 
-export const loadInsumos = async (userId) => {
+export const loadInsumos = async () => {
   try {
-    const docRef = doc(db, INSUMOS_COLLECTION, userId);
+    const docRef = doc(db, INSUMOS_COLLECTION, ORG_ID);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       return docSnap.data().data;
@@ -156,10 +161,10 @@ export const loadInsumos = async (userId) => {
   }
 };
 
-// ============== TAREAS EXPRESS ==============
-export const saveTareasExpress = async (userId, tareas) => {
+// ============== TAREAS EXPRESS (compartidas) ==============
+export const saveTareasExpress = async (tareas) => {
   try {
-    const docRef = doc(db, TAREAS_EXPRESS_COLLECTION, userId);
+    const docRef = doc(db, TAREAS_EXPRESS_COLLECTION, ORG_ID);
     await setDoc(docRef, { data: tareas }, { merge: true });
     return true;
   } catch (error) {
@@ -168,9 +173,9 @@ export const saveTareasExpress = async (userId, tareas) => {
   }
 };
 
-export const loadTareasExpress = async (userId) => {
+export const loadTareasExpress = async () => {
   try {
-    const docRef = doc(db, TAREAS_EXPRESS_COLLECTION, userId);
+    const docRef = doc(db, TAREAS_EXPRESS_COLLECTION, ORG_ID);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       return docSnap.data().data;
@@ -182,25 +187,49 @@ export const loadTareasExpress = async (userId) => {
   }
 };
 
-// ============== OBTENER TODOS LOS DATOS PARA REPORTE (FILTRADO POR MES) ==============
-export const getAllDataForReport = async (userId, month, year) => {
+// ============== ROLES DE USUARIO ==============
+export const getUserRole = async (userId) => {
+  try {
+    const docRef = doc(db, USER_ROLES_COLLECTION, userId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().role;
+    }
+    return 'viewer';
+  } catch (error) {
+    console.error('Error getting user role:', error);
+    return 'viewer';
+  }
+};
+
+export const setUserRole = async (userId, role, email) => {
+  try {
+    const docRef = doc(db, USER_ROLES_COLLECTION, userId);
+    await setDoc(docRef, { role, email }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error('Error setting user role:', error);
+    return false;
+  }
+};
+
+// ============== OBTENER TODOS LOS DATOS PARA REPORTE ==============
+export const getAllDataForReport = async (month, year) => {
   try {
     const [metrics, checklists, driveFolders, eventos, insumos, tareasExpress] = await Promise.all([
-      loadMetrics(userId, month, year),
-      loadChecklists(userId, month, year),
-      loadDriveFolders(userId),
-      loadEventos(userId),
-      loadInsumos(userId),
-      loadTareasExpress(userId)
+      loadMetrics(month, year),
+      loadChecklists(month, year),
+      loadDriveFolders(),
+      loadEventos(),
+      loadInsumos(),
+      loadTareasExpress()
     ]);
 
-    // Filtrar eventos por mes
     const eventosFiltrados = (eventos || []).filter(evento => {
       const fecha = new Date(evento.fecha);
       return fecha.getMonth() === month && fecha.getFullYear() === year;
     });
 
-    // Filtrar tareas express por mes (usando fechaEntrada)
     const tareasFiltradas = (tareasExpress || []).filter(tarea => {
       const fecha = new Date(tarea.fechaEntrada);
       return fecha.getMonth() === month && fecha.getFullYear() === year;

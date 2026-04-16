@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Plus, FolderOpen } from 'lucide-react';
+import { Edit, Plus, FolderOpen, Calendar } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { saveMetrics, loadMetrics, saveChecklists, loadChecklists, saveDriveFolders, loadDriveFolders } from '../services/database';
 import MetricsCard from '../components/dashboard/MetricsCard';
@@ -15,6 +15,17 @@ const EmbudoMeta = () => {
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [showDrivePopup, setShowDrivePopup] = useState(false);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('awareness');
+  
+  // Selector de mes y año
+  const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
+
+  const months = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+
+  const years = [2025, 2026, 2027];
 
   const defaultMetrics = {
     monterrey: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 },
@@ -38,26 +49,30 @@ const EmbudoMeta = () => {
   const [checklists, setChecklists] = useState(defaultChecklists);
   const [driveFolders, setDriveFolders] = useState(defaultDriveFolders);
 
+  // Cargar datos cuando cambia el mes
   useEffect(() => {
     const loadAllData = async () => {
       if (!user) return;
       
       setLoading(true);
       try {
-        const savedMetrics = await loadMetrics(user.uid);
+        // Cargar métricas del mes seleccionado
+        const savedMetrics = await loadMetrics(user.uid, selectedMonth, selectedYear);
         if (savedMetrics) {
           setMetrics(savedMetrics);
         } else {
+          // Si no hay datos para este mes, iniciar con ejemplo o vacío
           const exampleMetrics = {
-            monterrey: { leadsMeta: 1350, leadsGenerados: 337, presupuesto: 135000, gasto: 80000 },
-            saltillo: { leadsMeta: 850, leadsGenerados: 189, presupuesto: 85000, gasto: 42500 },
-            cdmx: { leadsMeta: 620, leadsGenerados: 142, presupuesto: 72000, gasto: 38200 }
+            monterrey: { leadsMeta: 1350, leadsGenerados: 0, presupuesto: 135000, gasto: 0 },
+            saltillo: { leadsMeta: 850, leadsGenerados: 0, presupuesto: 85000, gasto: 0 },
+            cdmx: { leadsMeta: 620, leadsGenerados: 0, presupuesto: 72000, gasto: 0 }
           };
           setMetrics(exampleMetrics);
-          await saveMetrics(user.uid, exampleMetrics);
+          await saveMetrics(user.uid, selectedMonth, selectedYear, exampleMetrics);
         }
 
-        const savedChecklists = await loadChecklists(user.uid);
+        // Cargar checklists del mes seleccionado
+        const savedChecklists = await loadChecklists(user.uid, selectedMonth, selectedYear);
         if (savedChecklists) {
           setChecklists(savedChecklists);
         } else {
@@ -76,9 +91,10 @@ const EmbudoMeta = () => {
             ]
           };
           setChecklists(exampleChecklists);
-          await saveChecklists(user.uid, exampleChecklists);
+          await saveChecklists(user.uid, selectedMonth, selectedYear, exampleChecklists);
         }
 
+        // Cargar drive folders (no dependen del mes)
         const savedFolders = await loadDriveFolders(user.uid);
         if (savedFolders) {
           setDriveFolders(savedFolders);
@@ -91,7 +107,7 @@ const EmbudoMeta = () => {
     };
 
     loadAllData();
-  }, [user]);
+  }, [user, selectedMonth, selectedYear]);
 
   const handleSaveMetrics = async (newMetrics) => {
     const updatedMetrics = {
@@ -100,7 +116,7 @@ const EmbudoMeta = () => {
     };
     setMetrics(updatedMetrics);
     if (user) {
-      await saveMetrics(user.uid, updatedMetrics);
+      await saveMetrics(user.uid, selectedMonth, selectedYear, updatedMetrics);
     }
   };
 
@@ -120,7 +136,7 @@ const EmbudoMeta = () => {
     setChecklists(newChecklists);
     
     if (user) {
-      await saveChecklists(user.uid, newChecklists);
+      await saveChecklists(user.uid, selectedMonth, selectedYear, newChecklists);
     }
   };
 
@@ -181,6 +197,36 @@ const EmbudoMeta = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
+      {/* Selector de mes y año */}
+      <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4">
+        <div className="flex items-center space-x-4">
+          <Calendar className="w-5 h-5 text-gray-600" />
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+          >
+            {months.map((month, index) => (
+              <option key={month} value={index}>{month}</option>
+            ))}
+          </select>
+          
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+          >
+            {years.map(year => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+
+          <span className="text-sm text-gray-500 ml-auto">
+            Métricas para {months[selectedMonth]} {selectedYear}
+          </span>
+        </div>
+      </div>
+
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-gray-800">Métricas Meta</h2>

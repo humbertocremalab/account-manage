@@ -14,11 +14,16 @@ const CHECKLISTS_COLLECTION = 'checklists';
 const DRIVE_FOLDERS_COLLECTION = 'driveFolders';
 const EVENTOS_COLLECTION = 'eventos';
 
-// ============== MÉTRICAS ==============
-export const saveMetrics = async (userId, metrics) => {
+// ============== MÉTRICAS (Ahora por mes) ==============
+export const saveMetrics = async (userId, month, year, metrics) => {
   try {
-    const docRef = doc(db, METRICS_COLLECTION, userId);
-    await setDoc(docRef, { data: metrics }, { merge: true });
+    const docRef = doc(db, METRICS_COLLECTION, `${userId}_${year}_${month}`);
+    await setDoc(docRef, { 
+      userId,
+      month,
+      year,
+      data: metrics 
+    }, { merge: true });
     return true;
   } catch (error) {
     console.error('Error saving metrics:', error);
@@ -26,9 +31,9 @@ export const saveMetrics = async (userId, metrics) => {
   }
 };
 
-export const loadMetrics = async (userId) => {
+export const loadMetrics = async (userId, month, year) => {
   try {
-    const docRef = doc(db, METRICS_COLLECTION, userId);
+    const docRef = doc(db, METRICS_COLLECTION, `${userId}_${year}_${month}`);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       return docSnap.data().data;
@@ -40,22 +45,16 @@ export const loadMetrics = async (userId) => {
   }
 };
 
-export const subscribeToMetrics = (userId, callback) => {
-  const docRef = doc(db, METRICS_COLLECTION, userId);
-  return onSnapshot(docRef, (docSnap) => {
-    if (docSnap.exists()) {
-      callback(docSnap.data().data);
-    } else {
-      callback(null);
-    }
-  });
-};
-
-// ============== CHECKLISTS ==============
-export const saveChecklists = async (userId, checklists) => {
+// ============== CHECKLISTS (Ahora por mes) ==============
+export const saveChecklists = async (userId, month, year, checklists) => {
   try {
-    const docRef = doc(db, CHECKLISTS_COLLECTION, userId);
-    await setDoc(docRef, { data: checklists }, { merge: true });
+    const docRef = doc(db, CHECKLISTS_COLLECTION, `${userId}_${year}_${month}`);
+    await setDoc(docRef, { 
+      userId,
+      month,
+      year,
+      data: checklists 
+    }, { merge: true });
     return true;
   } catch (error) {
     console.error('Error saving checklists:', error);
@@ -63,9 +62,9 @@ export const saveChecklists = async (userId, checklists) => {
   }
 };
 
-export const loadChecklists = async (userId) => {
+export const loadChecklists = async (userId, month, year) => {
   try {
-    const docRef = doc(db, CHECKLISTS_COLLECTION, userId);
+    const docRef = doc(db, CHECKLISTS_COLLECTION, `${userId}_${year}_${month}`);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       return docSnap.data().data;
@@ -73,6 +72,48 @@ export const loadChecklists = async (userId) => {
     return null;
   } catch (error) {
     console.error('Error loading checklists:', error);
+    return null;
+  }
+};
+
+// ============== OBTENER TODOS LOS DATOS PARA REPORTE (FILTRADO POR MES) ==============
+export const getAllDataForReport = async (userId, month, year) => {
+  try {
+    const [metrics, checklists, driveFolders, eventos, insumos, tareasExpress] = await Promise.all([
+      loadMetrics(userId, month, year),
+      loadChecklists(userId, month, year),
+      loadDriveFolders(userId),
+      loadEventos(userId),
+      loadInsumos(userId),
+      loadTareasExpress(userId)
+    ]);
+
+    // Filtrar eventos por mes
+    const eventosFiltrados = (eventos || []).filter(evento => {
+      const fecha = new Date(evento.fecha);
+      return fecha.getMonth() === month && fecha.getFullYear() === year;
+    });
+
+    // Filtrar tareas express por mes (usando fechaEntrada)
+    const tareasFiltradas = (tareasExpress || []).filter(tarea => {
+      const fecha = new Date(tarea.fechaEntrada);
+      return fecha.getMonth() === month && fecha.getFullYear() === year;
+    });
+
+    return {
+      metrics: metrics || {
+        monterrey: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 },
+        saltillo: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 },
+        cdmx: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 }
+      },
+      checklists: checklists || { awareness: [], prospeccion: [], retargeting: [] },
+      driveFolders: driveFolders || { awareness: null, prospeccion: null, retargeting: null },
+      eventos: eventosFiltrados,
+      insumos: insumos || [],
+      tareasExpress: tareasFiltradas
+    };
+  } catch (error) {
+    console.error('Error getting all data for report:', error);
     return null;
   }
 };

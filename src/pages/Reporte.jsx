@@ -33,22 +33,22 @@ const Reporte = () => {
   };
 
   useEffect(() => {
-    const loadReportData = async () => {
-      if (!user) return;
-      
-      setLoading(true);
-      try {
-        const data = await getAllDataForReport(user.uid);
-        setReportData(data);
-      } catch (error) {
-        console.error('Error loading report data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadReportData = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const data = await getAllDataForReport(user.uid, selectedMonth, selectedYear);
+      setReportData(data);
+    } catch (error) {
+      console.error('Error loading report data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    loadReportData();
-  }, [user]);
+  loadReportData();
+}, [user, selectedMonth, selectedYear]);
 
   const getMetricasSucursal = (sucursal) => {
     if (!reportData?.metrics) {

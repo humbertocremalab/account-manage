@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, Eye, Trash2, RefreshCw, Key } from 'lucide-react';
+import { Users, Shield, Eye, Trash2, Key, Plus, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getAllUsers, setUserRole, deleteUserRole } from '../services/database';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -38,13 +38,10 @@ const Usuarios = () => {
     setSuccess('');
     
     try {
-      // Crear usuario en Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, newUser.email, newUser.password);
-      
-      // Asignar rol en Firestore
       await setUserRole(userCredential.user.uid, newUser.role, newUser.email);
       
-      setSuccess(`Usuario ${newUser.email} creado como ${newUser.role}`);
+      setSuccess(`Usuario ${newUser.email} creado como ${newUser.role === 'admin' ? 'Administrador' : 'Invitado'}`);
       setShowAddModal(false);
       setNewUser({ email: '', password: '', role: 'viewer' });
       loadUsers();
@@ -63,17 +60,26 @@ const Usuarios = () => {
     try {
       await setUserRole(userId, newRole, email);
       loadUsers();
+      setSuccess(`Rol actualizado correctamente`);
+      setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       console.error('Error changing role:', error);
     }
   };
 
-  const handleDeleteUser = async (userId) => {
-    if (!window.confirm('¿Estás seguro de eliminar este usuario?')) return;
+  const handleDeleteUser = async (userId, userEmail) => {
+    if (userEmail === user.email) {
+      alert('No puedes eliminar tu propio usuario');
+      return;
+    }
+    
+    if (!window.confirm(`¿Estás seguro de eliminar al usuario ${userEmail}?`)) return;
     
     try {
       await deleteUserRole(userId);
       loadUsers();
+      setSuccess(`Usuario eliminado correctamente`);
+      setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       console.error('Error deleting user:', error);
     }
@@ -139,14 +145,14 @@ const Usuarios = () => {
             onClick={() => setShowAddModal(true)}
             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <Users className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4 mr-2" />
             Agregar Usuario
           </button>
         </div>
       </div>
 
       {success && (
-        <div className="mb-4 bg-green-50 text-green-600 p-3 rounded-lg">
+        <div className="mb-4 bg-green-50 text-green-600 p-3 rounded-lg text-sm">
           {success}
         </div>
       )}
@@ -162,7 +168,7 @@ const Usuarios = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Última actualización</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actualizado</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
               </tr>
             </thead>
@@ -170,7 +176,7 @@ const Usuarios = () => {
               {users.length === 0 ? (
                 <tr>
                   <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
-                    No hay usuarios registrados
+                    No hay usuarios registrados. Agrega uno con el botón "Agregar Usuario".
                   </td>
                 </tr>
               ) : (
@@ -181,14 +187,14 @@ const Usuarios = () => {
                       <select
                         value={u.role}
                         onChange={(e) => handleChangeRole(u.uid, e.target.value, u.email)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        className={`px-3 py-1 rounded-full text-xs font-medium border ${
                           u.role === 'admin' 
-                            ? 'bg-blue-100 text-blue-700' 
-                            : 'bg-gray-100 text-gray-700'
+                            ? 'bg-blue-100 text-blue-700 border-blue-300' 
+                            : 'bg-gray-100 text-gray-700 border-gray-300'
                         }`}
                       >
                         <option value="admin">Admin</option>
-                        <option value="viewer">Viewer</option>
+                        <option value="viewer">Invitado</option>
                       </select>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
@@ -196,7 +202,7 @@ const Usuarios = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button
-                        onClick={() => handleDeleteUser(u.uid)}
+                        onClick={() => handleDeleteUser(u.uid, u.email)}
                         className="text-gray-400 hover:text-red-600 transition-colors"
                         title="Eliminar usuario"
                       >
@@ -215,10 +221,13 @@ const Usuarios = () => {
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between p-5 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800">Agregar Nuevo Usuario</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <form onSubmit={handleAddUser} className="p-6 space-y-4">
+            <form onSubmit={handleAddUser} className="p-5 space-y-4">
               {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
               
               <div>
@@ -228,6 +237,7 @@ const Usuarios = () => {
                   value={newUser.email}
                   onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  placeholder="usuario@ejemplo.com"
                   required
                 />
               </div>
@@ -239,6 +249,7 @@ const Usuarios = () => {
                   value={newUser.password}
                   onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  placeholder="••••••••"
                   required
                   minLength="6"
                 />
@@ -251,7 +262,7 @@ const Usuarios = () => {
                   onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                 >
-                  <option value="viewer">Viewer (Solo lectura)</option>
+                  <option value="viewer">Invitado (Solo lectura)</option>
                   <option value="admin">Admin (Acceso completo)</option>
                 </select>
               </div>
@@ -280,10 +291,13 @@ const Usuarios = () => {
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between p-5 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800">Cambiar Contraseña</h3>
+              <button onClick={() => setShowPasswordModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <form onSubmit={handleChangePassword} className="p-6 space-y-4">
+            <form onSubmit={handleChangePassword} className="p-5 space-y-4">
               {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
               
               <div>

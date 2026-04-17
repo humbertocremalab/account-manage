@@ -1,7 +1,7 @@
 import React from 'react';
 import { MapPin, Calendar, Edit, Trash2, RefreshCw } from 'lucide-react';
 
-const InsumoCard = ({ insumo, onEdit, onDelete, onRenovar }) => {
+const InsumoCard = ({ insumo, onEdit, onDelete, onRenovar, readOnly = false }) => {
   const getEstadoConfig = (fechaVencimiento) => {
     if (!fechaVencimiento) {
       return { label: 'Sin fecha', color: 'gray', bgColor: 'bg-gray-100', textColor: 'text-gray-600' };
@@ -70,6 +70,7 @@ const InsumoCard = ({ insumo, onEdit, onDelete, onRenovar }) => {
             {sucursales[insumo.sucursal] || insumo.sucursal}
           </div>
         </div>
+         {!readOnly && (
         <div className="flex space-x-1">
           <button
             onClick={() => onEdit(insumo)}
@@ -86,6 +87,7 @@ const InsumoCard = ({ insumo, onEdit, onDelete, onRenovar }) => {
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -106,6 +108,7 @@ const InsumoCard = ({ insumo, onEdit, onDelete, onRenovar }) => {
       </div>
 
       <div className="mt-3 pt-3 border-t border-gray-100">
+         {!readOnly && onRenovar && (
         <button
           onClick={() => onRenovar(insumo)}
           className="w-full py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center"
@@ -113,6 +116,7 @@ const InsumoCard = ({ insumo, onEdit, onDelete, onRenovar }) => {
           <RefreshCw className="w-3.5 h-3.5 mr-1" />
           Renovar
         </button>
+         )}
       </div>
     </div>
   );

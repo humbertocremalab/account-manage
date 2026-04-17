@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Edit } from 'lucide-react';
+import { Calendar, Plus, Edit, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { saveEventos, loadEventos } from '../services/database';
 import EventList from '../components/eventos/EventList';
@@ -9,7 +9,7 @@ import NewEventPopup from '../components/eventos/NewEventPopup';
 import EditEventPopup from '../components/eventos/EditEventPopup';
 
 const Eventos = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   const [eventos, setEventos] = useState([]);
   const [eventoActivo, setEventoActivo] = useState(null);
@@ -18,8 +18,6 @@ const Eventos = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      if (!user) return;
-      
       setLoading(true);
       try {
         const savedEventos = await loadEventos();
@@ -35,15 +33,15 @@ const Eventos = () => {
     };
 
     loadData();
-  }, [user]);
+  }, []);
 
   const saveEventosToDB = async (updatedEventos) => {
-    if (user) {
-      await saveEventos(updatedEventos);
-    }
+    await saveEventos(updatedEventos);
   };
 
   const handleAddEvento = async (nuevoEvento) => {
+    if (!isAdmin) return;
+    
     const eventoConDatos = {
       ...nuevoEvento,
       tareas: [],
@@ -56,6 +54,8 @@ const Eventos = () => {
   };
 
   const handleUpdateEvento = async (eventoActualizado) => {
+    if (!isAdmin) return;
+    
     const updatedEventos = eventos.map(ev => 
       ev.id === eventoActualizado.id ? eventoActualizado : ev
     );
@@ -65,6 +65,8 @@ const Eventos = () => {
   };
 
   const handleDeleteEvento = async (eventoId) => {
+    if (!isAdmin) return;
+    
     const updatedEventos = eventos.filter(ev => ev.id !== eventoId);
     setEventos(updatedEventos);
     if (eventoActivo?.id === eventoId) {
@@ -78,7 +80,7 @@ const Eventos = () => {
   };
 
   const handleAddTarea = async (texto) => {
-    if (!eventoActivo) return;
+    if (!isAdmin || !eventoActivo) return;
     
     const updatedEventos = eventos.map(ev => 
       ev.id === eventoActivo.id 
@@ -91,7 +93,7 @@ const Eventos = () => {
   };
 
   const handleToggleTarea = async (index) => {
-    if (!eventoActivo) return;
+    if (!isAdmin || !eventoActivo) return;
     
     const updatedEventos = eventos.map(ev => 
       ev.id === eventoActivo.id 
@@ -109,7 +111,7 @@ const Eventos = () => {
   };
 
   const handleDeleteTarea = async (index) => {
-    if (!eventoActivo) return;
+    if (!isAdmin || !eventoActivo) return;
     
     const updatedEventos = eventos.map(ev => 
       ev.id === eventoActivo.id 
@@ -122,7 +124,7 @@ const Eventos = () => {
   };
 
   const handleAddGasto = async (gasto) => {
-    if (!eventoActivo) return;
+    if (!isAdmin || !eventoActivo) return;
     
     const updatedEventos = eventos.map(ev => 
       ev.id === eventoActivo.id 
@@ -135,7 +137,7 @@ const Eventos = () => {
   };
 
   const handleDeleteGasto = async (index) => {
-    if (!eventoActivo) return;
+    if (!isAdmin || !eventoActivo) return;
     
     const updatedEventos = eventos.map(ev => 
       ev.id === eventoActivo.id 
@@ -157,6 +159,13 @@ const Eventos = () => {
 
   return (
     <div className="p-6">
+      {!isAdmin && (
+        <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center">
+          <Lock className="w-4 h-4 text-yellow-600 mr-2" />
+          <span className="text-sm text-yellow-700">Modo solo lectura - No puedes editar</span>
+        </div>
+      )}
+
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Eventos</h2>
         <p className="text-gray-600 text-sm">
@@ -168,18 +177,26 @@ const Eventos = () => {
         <div className="bg-gray-50 rounded-xl p-12 text-center">
           <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-800 mb-2">
-            Crea tu primer evento para empezar
+            No hay eventos registrados
           </h3>
-          <p className="text-gray-500 mb-6">
-            Organiza tus eventos, tareas y gastos en un solo lugar
-          </p>
-          <button
-            onClick={() => setShowNewEventPopup(true)}
-            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Nuevo Evento
-          </button>
+          {isAdmin ? (
+            <>
+              <p className="text-gray-500 mb-6">
+                Organiza tus eventos, tareas y gastos en un solo lugar
+              </p>
+              <button
+                onClick={() => setShowNewEventPopup(true)}
+                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Nuevo Evento
+              </button>
+            </>
+          ) : (
+            <p className="text-gray-500">
+              No hay eventos registrados aún
+            </p>
+          )}
         </div>
       ) : (
         <div className="grid lg:grid-cols-3 gap-6">
@@ -188,8 +205,9 @@ const Eventos = () => {
               eventos={eventos}
               eventoActivo={eventoActivo}
               onSelectEvent={handleSelectEvento}
-              onNewEvent={() => setShowNewEventPopup(true)}
-              onDeleteEvent={handleDeleteEvento}
+              onNewEvent={isAdmin ? () => setShowNewEventPopup(true) : null}
+              onDeleteEvent={isAdmin ? handleDeleteEvento : null}
+              readOnly={!isAdmin}
             />
           </div>
 
@@ -210,27 +228,31 @@ const Eventos = () => {
                         })}
                       </p>
                     </div>
-                    <button
-                      onClick={() => setShowEditEventPopup(true)}
-                      className="text-sm text-blue-600 hover:text-blue-700 flex items-center"
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      Editar
-                    </button>
+                    {isAdmin && (
+                      <button
+                        onClick={() => setShowEditEventPopup(true)}
+                        className="text-sm text-blue-600 hover:text-blue-700 flex items-center"
+                      >
+                        <Edit className="w-4 h-4 mr-1" />
+                        Editar
+                      </button>
+                    )}
                   </div>
                 </div>
 
                 <TareasChecklist
                   tareas={eventoActivo.tareas || []}
-                  onAddTarea={handleAddTarea}
-                  onToggleTarea={handleToggleTarea}
-                  onDeleteTarea={handleDeleteTarea}
+                  onAddTarea={isAdmin ? handleAddTarea : null}
+                  onToggleTarea={isAdmin ? handleToggleTarea : null}
+                  onDeleteTarea={isAdmin ? handleDeleteTarea : null}
+                  readOnly={!isAdmin}
                 />
 
                 <GastosList
                   gastos={eventoActivo.gastos || []}
-                  onAddGasto={handleAddGasto}
-                  onDeleteGasto={handleDeleteGasto}
+                  onAddGasto={isAdmin ? handleAddGasto : null}
+                  onDeleteGasto={isAdmin ? handleDeleteGasto : null}
+                  readOnly={!isAdmin}
                 />
               </>
             ) : (
@@ -242,18 +264,22 @@ const Eventos = () => {
         </div>
       )}
 
-      <NewEventPopup
-        isOpen={showNewEventPopup}
-        onClose={() => setShowNewEventPopup(false)}
-        onAdd={handleAddEvento}
-      />
+      {isAdmin && (
+        <>
+          <NewEventPopup
+            isOpen={showNewEventPopup}
+            onClose={() => setShowNewEventPopup(false)}
+            onAdd={handleAddEvento}
+          />
 
-      <EditEventPopup
-        isOpen={showEditEventPopup}
-        onClose={() => setShowEditEventPopup(false)}
-        onSave={handleUpdateEvento}
-        evento={eventoActivo}
-      />
+          <EditEventPopup
+            isOpen={showEditEventPopup}
+            onClose={() => setShowEditEventPopup(false)}
+            onSave={handleUpdateEvento}
+            evento={eventoActivo}
+          />
+        </>
+      )}
     </div>
   );
 };

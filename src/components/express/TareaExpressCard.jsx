@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, User, Edit, Trash2, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
-const TareaExpressCard = ({ tarea, onEdit, onDelete, onToggleComplete }) => {
+const TareaExpressCard = ({ tarea, onEdit, onDelete, onToggleComplete, readOnly = false }) => {
   const getEstadoConfig = (estado) => {
     switch (estado) {
       case 'completada':
@@ -74,6 +74,7 @@ const TareaExpressCard = ({ tarea, onEdit, onDelete, onToggleComplete }) => {
             </div>
           )}
         </div>
+         {!readOnly && (
         <div className="flex space-x-1">
           <button
             onClick={() => onToggleComplete(tarea)}
@@ -101,6 +102,7 @@ const TareaExpressCard = ({ tarea, onEdit, onDelete, onToggleComplete }) => {
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
+        )}
       </div>
 
       <div className="flex items-center justify-between text-xs text-gray-500 mb-2">

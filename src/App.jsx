@@ -9,6 +9,7 @@ import TareasExpress from './pages/TareasExpress';
 import Reporte from './pages/Reporte';
 import Usuarios from './pages/Usuarios';
 import Sidebar from './components/layout/Sidebar';
+import BottomNav from './components/layout/BottomNav';
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
@@ -29,8 +30,11 @@ const AppContent = () => {
 
   return (
     <div className="flex h-screen bg-gray-50">
+      {/* Sidebar - Visible en tablet y desktop (md+) */}
       <Sidebar />
-      <div className="flex-1 overflow-auto">
+      
+      {/* Contenido principal - con padding bottom para mobile */}
+      <div className="flex-1 overflow-auto pb-16 md:pb-0">
         <Routes>
           <Route path="/" element={<Navigate to="/embudo-meta" />} />
           <Route path="/embudo-meta" element={<EmbudoMeta />} />
@@ -42,6 +46,9 @@ const AppContent = () => {
           <Route path="*" element={<Navigate to="/embudo-meta" />} />
         </Routes>
       </div>
+      
+      {/* Navegación inferior - Solo visible en mobile (< md) */}
+      <BottomNav />
     </div>
   );
 };

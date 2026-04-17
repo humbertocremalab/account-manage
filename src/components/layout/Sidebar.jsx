@@ -16,7 +16,6 @@ import { useAuth } from '../../context/AuthContext';
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const { logout, isAdmin } = useAuth();
-console.log('isAdmin en Sidebar:', isAdmin);
 
   const menuItems = [
     { id: 'embudo', label: 'Embudo Meta', icon: Target, path: '/embudo-meta' },
@@ -28,7 +27,7 @@ console.log('isAdmin en Sidebar:', isAdmin);
 
   return (
     <div 
-      className={`bg-white border-r border-gray-200 h-screen flex flex-col transition-all duration-300 ${
+      className={`bg-white border-r border-gray-200 h-screen flex-col transition-all duration-300 hidden md:flex ${
         collapsed ? 'w-20' : 'w-64'
       }`}
     >
@@ -58,7 +57,7 @@ console.log('isAdmin en Sidebar:', isAdmin);
       </div>
 
       {/* Menú de navegación */}
-      <nav className="flex-1 py-4">
+      <nav className="flex-1 py-4 overflow-y-auto">
         {menuItems.map((item) => (
           <NavLink
             key={item.id}

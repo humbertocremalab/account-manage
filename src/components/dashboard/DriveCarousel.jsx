@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Play, X, Film, Image, File } from 'lucide-react';
 import { getFilesFromFolder, getFileThumbnail, getFileType } from '../../services/driveService';
 
-const DriveCarousel = ({ folderData, onRemove }) => {
+const DriveCarousel = ({ folderData, onRemove, readOnly = false }) => {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -43,7 +43,6 @@ const DriveCarousel = ({ folderData, onRemove }) => {
     const thumbnailUrl = getFileThumbnail(file);
 
     if (imgError) {
-      // Fallback visual cuando la miniatura no carga
       return (
         <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex flex-col items-center justify-center">
           {fileType === 'video' && <Film className="w-6 h-6 text-gray-400 mb-1" />}
@@ -81,6 +80,29 @@ const DriveCarousel = ({ folderData, onRemove }) => {
     return null;
   }
 
+  // Componente para el contenido del archivo (con o sin enlace)
+  const FileWrapper = ({ file, children }) => {
+    if (readOnly) {
+      // Invitado: solo mostrar sin enlace
+      return (
+        <div className="flex-shrink-0 group w-[90px] cursor-default">
+          {children}
+        </div>
+      );
+    }
+    // Admin: con enlace para abrir
+    return (
+      <a
+        href={file.webViewLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex-shrink-0 group w-[90px] cursor-pointer"
+      >
+        {children}
+      </a>
+    );
+  };
+
   return (
     <div className="bg-white rounded-lg overflow-hidden">
       {/* Header */}
@@ -88,7 +110,7 @@ const DriveCarousel = ({ folderData, onRemove }) => {
         <h4 className="font-medium text-gray-800 text-sm">
           {folderData.nombre} <span className="text-gray-400 font-normal text-xs">({folderData.categoria})</span>
         </h4>
-        {onRemove && (
+        {!readOnly && onRemove && (
           <button
             onClick={() => onRemove(folderData.categoria)}
             className="p-1 text-gray-400 hover:text-red-500 transition-colors rounded"
@@ -108,12 +130,14 @@ const DriveCarousel = ({ folderData, onRemove }) => {
         ) : error ? (
           <div className="py-8 text-center">
             <p className="text-red-500 text-xs mb-2">{error}</p>
-            <button 
-              onClick={() => loadFiles(folderData.url)}
-              className="text-xs text-blue-600 hover:text-blue-700"
-            >
-              Reintentar
-            </button>
+            {!readOnly && (
+              <button 
+                onClick={() => loadFiles(folderData.url)}
+                className="text-xs text-blue-600 hover:text-blue-700"
+              >
+                Reintentar
+              </button>
+            )}
           </div>
         ) : files.length === 0 ? (
           <div className="py-8 text-center text-gray-500 text-xs">
@@ -123,13 +147,7 @@ const DriveCarousel = ({ folderData, onRemove }) => {
           <div className="overflow-x-auto pb-1 -mx-3 px-3">
             <div className="flex gap-3 min-w-max">
               {files.map((file) => (
-                <a
-                  key={file.id}
-                  href={file.webViewLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-shrink-0 group w-[90px]"
-                >
+                <FileWrapper key={file.id} file={file}>
                   {/* Miniatura 9:16 */}
                   <div className="relative h-[160px] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                     <FileThumbnail file={file} />
@@ -142,7 +160,7 @@ const DriveCarousel = ({ folderData, onRemove }) => {
                   >
                     {truncateFileName(file.name, 12)}
                   </p>
-                </a>
+                </FileWrapper>
               ))}
             </div>
           </div>

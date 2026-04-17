@@ -22,7 +22,7 @@ const Eventos = () => {
       
       setLoading(true);
       try {
-        const savedEventos = await loadEventos(user.uid);
+        const savedEventos = await loadEventos();
         if (savedEventos && savedEventos.length > 0) {
           setEventos(savedEventos);
           setEventoActivo(savedEventos[0]);
@@ -39,7 +39,7 @@ const Eventos = () => {
 
   const saveEventosToDB = async (updatedEventos) => {
     if (user) {
-      await saveEventos(user.uid, updatedEventos);
+      await saveEventos(updatedEventos);
     }
   };
 

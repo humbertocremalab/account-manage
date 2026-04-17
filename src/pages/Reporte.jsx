@@ -34,7 +34,7 @@ const Reporte = () => {
       
       setLoading(true);
       try {
-        const data = await getAllDataForReport(user.uid, selectedMonth, selectedYear);
+        const data = await getAllDataForReport(selectedMonth, selectedYear);
         setReportData(data);
       } catch (error) {
         console.error('Error loading report data:', error);

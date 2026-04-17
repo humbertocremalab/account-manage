@@ -16,6 +16,7 @@ import { useAuth } from '../../context/AuthContext';
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const { logout, isAdmin } = useAuth();
+console.log('isAdmin en Sidebar:', isAdmin);
 
   const menuItems = [
     { id: 'embudo', label: 'Embudo Meta', icon: Target, path: '/embudo-meta' },

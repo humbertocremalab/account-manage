@@ -19,7 +19,7 @@ const Insumos = () => {
       
       setLoading(true);
       try {
-        const savedInsumos = await loadInsumos(user.uid);
+        const savedInsumos = await loadInsumos();
         if (savedInsumos) {
           setInsumos(savedInsumos);
         }
@@ -35,7 +35,7 @@ const Insumos = () => {
 
   const saveInsumosToDB = async (updatedInsumos) => {
     if (user) {
-      await saveInsumos(user.uid, updatedInsumos);
+      await saveInsumos(updatedInsumos);
     }
   };
 

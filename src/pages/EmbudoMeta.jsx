@@ -54,7 +54,7 @@ const EmbudoMeta = () => {
       
       setLoading(true);
       try {
-        const savedMetrics = await loadMetrics(user.uid, selectedMonth, selectedYear);
+        const savedMetrics = await loadMetrics(selectedMonth, selectedYear);
         if (savedMetrics) {
           setMetrics(savedMetrics);
         } else {
@@ -64,7 +64,7 @@ const EmbudoMeta = () => {
             cdmx: { leadsMeta: 620, leadsGenerados: 142, presupuesto: 72000, gasto: 38200 }
           };
           setMetrics(exampleMetrics);
-          await saveMetrics(user.uid, selectedMonth, selectedYear, exampleMetrics);
+          await saveMetrics(selectedMonth, selectedYear, exampleMetrics);
         }
 
         const savedChecklists = await loadChecklists(user.uid, selectedMonth, selectedYear);
@@ -89,7 +89,7 @@ const EmbudoMeta = () => {
           await saveChecklists(user.uid, selectedMonth, selectedYear, exampleChecklists);
         }
 
-        const savedFolders = await loadDriveFolders(user.uid);
+        const savedFolders = await loadDriveFolders();
         if (savedFolders) {
           setDriveFolders(savedFolders);
         }
@@ -130,7 +130,7 @@ const EmbudoMeta = () => {
     setChecklists(newChecklists);
     
     if (user) {
-      await saveChecklists(user.uid, selectedMonth, selectedYear, newChecklists);
+      await saveChecklists(selectedMonth, selectedYear, newChecklists);
     }
   };
 
@@ -146,7 +146,7 @@ const EmbudoMeta = () => {
     setDriveFolders(newFolders);
     
     if (user) {
-      await saveDriveFolders(user.uid, newFolders);
+      await saveDriveFolders(newFolders);
     }
   };
 

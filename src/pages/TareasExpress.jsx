@@ -19,7 +19,7 @@ const TareasExpress = () => {
       
       setLoading(true);
       try {
-        const savedTareas = await loadTareasExpress(user.uid);
+        const savedTareas = await loadTareasExpress();
         if (savedTareas) {
           setTareas(savedTareas);
         }
@@ -35,7 +35,7 @@ const TareasExpress = () => {
 
   const saveTareasToDB = async (updatedTareas) => {
     if (user) {
-      await saveTareasExpress(user.uid, updatedTareas);
+      await saveTareasExpress(updatedTareas);
     }
   };
 

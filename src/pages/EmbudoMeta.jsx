@@ -102,15 +102,12 @@ const EmbudoMeta = () => {
   }, [selectedMonth, selectedYear, isAdmin]);
 
   const handleSaveMetrics = async (newMetrics) => {
-    if (!isAdmin) return;
-    
-    const updatedMetrics = {
-      ...metrics,
-      [sucursalActiva]: newMetrics
-    };
-    setMetrics(updatedMetrics);
-    await saveMetrics(selectedMonth, selectedYear, updatedMetrics);
-  };
+  if (!isAdmin) return;
+  
+  // newMetrics ya contiene TODAS las sucursales (monterrey, saltillo, cdmx)
+  setMetrics(newMetrics);
+  await saveMetrics(selectedMonth, selectedYear, newMetrics);
+};
 
   const handleChecklistUpdate = async (section, action, index, value = null) => {
     if (!isAdmin) return;
@@ -408,12 +405,11 @@ const EmbudoMeta = () => {
       {isAdmin && (
         <>
           <EditMetricsPopup
-            isOpen={showEditPopup}
-            onClose={() => setShowEditPopup(false)}
-            metrics={metricsActuales}
-            onSave={handleSaveMetrics}
-            sucursal={sucursales.find(s => s.id === sucursalActiva)?.label}
-          />
+  isOpen={showEditPopup}
+  onClose={() => setShowEditPopup(false)}
+  metrics={metrics}  // Pasamos TODAS las métricas, no solo la sucursal activa
+  onSave={handleSaveMetrics}
+/>
 
           <AddDriveFolderPopup
             isOpen={showDrivePopup}

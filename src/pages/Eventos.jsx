@@ -18,33 +18,28 @@ const Eventos = () => {
 
   useEffect(() => {
     const loadData = async () => {
-  if (!user) return;
-  
-  setLoading(true);
-  try {
-    const savedEventos = await loadEventos();
-    if (savedEventos && Array.isArray(savedEventos)) {
-      setEventos(savedEventos);
-      if (savedEventos.length > 0) {
-        setEventoActivo(savedEventos[0]);
+      if (!user) return;
+      
+      setLoading(true);
+      try {
+        const savedEventos = await loadEventos(user.uid);
+        if (savedEventos && savedEventos.length > 0) {
+          setEventos(savedEventos);
+          setEventoActivo(savedEventos[0]);
+        }
+      } catch (error) {
+        console.error('Error loading eventos:', error);
+      } finally {
+        setLoading(false);
       }
-    } else {
-      setEventos([]);
-    }
-  } catch (error) {
-    console.error('Error loading eventos:', error);
-    setEventos([]);
-  } finally {
-    setLoading(false);
-  }
-};
+    };
 
     loadData();
   }, [user]);
 
   const saveEventosToDB = async (updatedEventos) => {
     if (user) {
-      await saveEventos(updatedEventos);
+      await saveEventos(user.uid, updatedEventos);
     }
   };
 

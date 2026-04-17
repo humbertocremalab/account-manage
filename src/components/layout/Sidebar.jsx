@@ -8,15 +8,14 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
+  Users
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useAuth } from '../context/AuthContext';
 
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const { logout } = useAuth();
-  const { isAdmin } = useAuth();
+  const { logout, isAdmin } = useAuth();
 
   const menuItems = [
     { id: 'embudo', label: 'Embudo Meta', icon: Target, path: '/embudo-meta' },
@@ -76,6 +75,24 @@ const Sidebar = () => {
             {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
           </NavLink>
         ))}
+
+        {/* Item de Usuarios - SOLO VISIBLE PARA ADMIN */}
+        {isAdmin && (
+          <NavLink
+            to="/usuarios"
+            className={({ isActive }) =>
+              `flex items-center px-4 py-3 mx-2 rounded-lg transition-colors ${
+                isActive
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`
+            }
+            title={collapsed ? 'Usuarios' : ''}
+          >
+            <Users className={`w-5 h-5 ${!collapsed && 'mr-3'}`} />
+            {!collapsed && <span className="text-sm font-medium">Usuarios</span>}
+          </NavLink>
+        )}
       </nav>
 
       {/* Footer - Cerrar sesión */}

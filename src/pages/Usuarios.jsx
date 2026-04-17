@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, Eye, Trash2, Key, Plus, X } from 'lucide-react';
+import { Users, Shield, Plus, X, Key, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getAllUsers, setUserRole, deleteUserRole } from '../services/database';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -17,16 +17,22 @@ const Usuarios = () => {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    loadUsers();
-  }, []);
+    console.log('Usuarios page mounted, isAdmin:', isAdmin);
+    if (isAdmin) {
+      loadUsers();
+    }
+  }, [isAdmin]);
 
   const loadUsers = async () => {
+    console.log('Loading users...');
     setLoading(true);
     try {
       const allUsers = await getAllUsers();
+      console.log('Users loaded:', allUsers);
       setUsers(allUsers);
     } catch (error) {
       console.error('Error loading users:', error);
+      setError('Error al cargar usuarios');
     } finally {
       setLoading(false);
     }
@@ -38,14 +44,19 @@ const Usuarios = () => {
     setSuccess('');
     
     try {
+      console.log('Creating user:', newUser.email);
       const userCredential = await createUserWithEmailAndPassword(auth, newUser.email, newUser.password);
+      console.log('User created:', userCredential.user.uid);
+      
       await setUserRole(userCredential.user.uid, newUser.role, newUser.email);
+      console.log('Role set successfully');
       
       setSuccess(`Usuario ${newUser.email} creado como ${newUser.role === 'admin' ? 'Administrador' : 'Invitado'}`);
       setShowAddModal(false);
       setNewUser({ email: '', password: '', role: 'viewer' });
       loadUsers();
     } catch (error) {
+      console.error('Error creating user:', error);
       if (error.code === 'auth/email-already-in-use') {
         setError('Este email ya está registrado');
       } else if (error.code === 'auth/weak-password') {
@@ -58,12 +69,14 @@ const Usuarios = () => {
 
   const handleChangeRole = async (userId, newRole, email) => {
     try {
+      console.log('Changing role for:', email, 'to', newRole);
       await setUserRole(userId, newRole, email);
       loadUsers();
       setSuccess(`Rol actualizado correctamente`);
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       console.error('Error changing role:', error);
+      setError('Error al cambiar rol');
     }
   };
 
@@ -76,12 +89,14 @@ const Usuarios = () => {
     if (!window.confirm(`¿Estás seguro de eliminar al usuario ${userEmail}?`)) return;
     
     try {
+      console.log('Deleting user:', userEmail);
       await deleteUserRole(userId);
       loadUsers();
       setSuccess(`Usuario eliminado correctamente`);
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       console.error('Error deleting user:', error);
+      setError('Error al eliminar usuario');
     }
   };
 
@@ -101,11 +116,13 @@ const Usuarios = () => {
     }
     
     try {
+      console.log('Changing password...');
       await changePassword(passwordData.current, passwordData.new);
       setSuccess('Contraseña actualizada correctamente');
       setShowPasswordModal(false);
       setPasswordData({ current: '', new: '', confirm: '' });
     } catch (error) {
+      console.error('Error changing password:', error);
       if (error.code === 'auth/wrong-password') {
         setError('Contraseña actual incorrecta');
       } else {
@@ -114,6 +131,7 @@ const Usuarios = () => {
     }
   };
 
+  // Si no es admin, mostrar mensaje
   if (!isAdmin) {
     return (
       <div className="p-6 text-center">
@@ -156,6 +174,12 @@ const Usuarios = () => {
           {success}
         </div>
       )}
+      
+      {error && (
+        <div className="mb-4 bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-12">
@@ -168,14 +192,13 @@ const Usuarios = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actualizado</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan="3" className="px-6 py-8 text-center text-gray-500">
                     No hay usuarios registrados. Agrega uno con el botón "Agregar Usuario".
                   </td>
                 </tr>
@@ -196,9 +219,6 @@ const Usuarios = () => {
                         <option value="admin">Admin</option>
                         <option value="viewer">Invitado</option>
                       </select>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {u.updatedAt ? new Date(u.updatedAt).toLocaleDateString() : '-'}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button
@@ -228,8 +248,6 @@ const Usuarios = () => {
               </button>
             </div>
             <form onSubmit={handleAddUser} className="p-5 space-y-4">
-              {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
-              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
@@ -298,8 +316,6 @@ const Usuarios = () => {
               </button>
             </div>
             <form onSubmit={handleChangePassword} className="p-5 space-y-4">
-              {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
-              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña actual</label>
                 <input

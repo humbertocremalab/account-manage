@@ -7,8 +7,8 @@ import Eventos from './pages/Eventos';
 import Insumos from './pages/Insumos';
 import TareasExpress from './pages/TareasExpress';
 import Reporte from './pages/Reporte';
-import Sidebar from './components/layout/Sidebar';
 import Usuarios from './pages/Usuarios';
+import Sidebar from './components/layout/Sidebar';
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
@@ -23,7 +23,6 @@ const AppContent = () => {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<Navigate to="/login" />} />
-        <Route path="/usuarios" element={<Usuarios />} />
       </Routes>
     );
   }
@@ -39,6 +38,7 @@ const AppContent = () => {
           <Route path="/insumos" element={<Insumos />} />
           <Route path="/express" element={<TareasExpress />} />
           <Route path="/reporte" element={<Reporte />} />
+          <Route path="/usuarios" element={<Usuarios />} />
           <Route path="*" element={<Navigate to="/embudo-meta" />} />
         </Routes>
       </div>

@@ -14,21 +14,24 @@ const TareasExpress = () => {
   const [tareaEditando, setTareaEditando] = useState(null);
 
   useEffect(() => {
-    const loadData = async () => {
-      if (!user) return;
-      
-      setLoading(true);
-      try {
-        const savedTareas = await loadTareasExpress(user.uid);
-        if (savedTareas) {
-          setTareas(savedTareas);
-        }
-      } catch (error) {
-        console.error('Error loading tareas express:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+   const loadData = async () => {
+  if (!user) return;
+  
+  setLoading(true);
+  try {
+    const savedTareas = await loadTareasExpress();
+    if (savedTareas && Array.isArray(savedTareas)) {
+      setTareas(savedTareas);
+    } else {
+      setTareas([]);
+    }
+  } catch (error) {
+    console.error('Error loading tareas express:', error);
+    setTareas([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
     loadData();
   }, [user]);

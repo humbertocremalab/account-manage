@@ -15,20 +15,23 @@ const Insumos = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      if (!user) return;
-      
-      setLoading(true);
-      try {
-        const savedInsumos = await loadInsumos(user.uid);
-        if (savedInsumos) {
-          setInsumos(savedInsumos);
-        }
-      } catch (error) {
-        console.error('Error loading insumos:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (!user) return;
+  
+  setLoading(true);
+  try {
+    const savedInsumos = await loadInsumos();
+    if (savedInsumos && Array.isArray(savedInsumos)) {
+      setInsumos(savedInsumos);
+    } else {
+      setInsumos([]);
+    }
+  } catch (error) {
+    console.error('Error loading insumos:', error);
+    setInsumos([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
     loadData();
   }, [user]);

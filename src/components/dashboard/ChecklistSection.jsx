@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CheckSquare, Plus, Trash2 } from 'lucide-react';
 
-const ChecklistSection = ({ title, items, onAddItem, onToggleItem, onDeleteItem }) => {
+const ChecklistSection = ({ title, items = [], onAddItem, onToggleItem, onDeleteItem, readOnly = false }) => {
   const [newItemText, setNewItemText] = useState('');
 
   const handleAdd = () => {

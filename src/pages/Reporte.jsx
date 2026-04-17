@@ -33,11 +33,8 @@ const Reporte = () => {
       if (!user) return;
       
       setLoading(true);
-      console.log('Cargando reporte para:', user.uid, selectedMonth, selectedYear);
-      
       try {
         const data = await getAllDataForReport(user.uid, selectedMonth, selectedYear);
-        console.log('Datos del reporte:', data);
         setReportData(data);
       } catch (error) {
         console.error('Error loading report data:', error);
@@ -64,10 +61,7 @@ const Reporte = () => {
   };
 
   const generatePDF = async () => {
-    if (!reportRef.current) {
-      console.error('Report ref is null');
-      return;
-    }
+    if (!reportRef.current) return;
     
     setGeneratingPDF(true);
     
@@ -147,7 +141,6 @@ const Reporte = () => {
         </p>
       </div>
 
-      {/* Selector de mes y año */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -156,7 +149,6 @@ const Reporte = () => {
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-              style={{ backgroundColor: '#ffffff' }}
             >
               {months.map((month, index) => (
                 <option key={month} value={index}>{month}</option>
@@ -167,7 +159,6 @@ const Reporte = () => {
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-              style={{ backgroundColor: '#ffffff' }}
             >
               {years.map(year => (
                 <option key={year} value={year}>{year}</option>
@@ -196,21 +187,11 @@ const Reporte = () => {
         </div>
       </div>
 
-      {/* Contenido del reporte */}
-      <div 
-        ref={reportRef} 
-        style={{ 
-          backgroundColor: '#ffffff',
-          borderRadius: '12px',
-          padding: '24px',
-          fontFamily: 'system-ui, -apple-system, sans-serif'
-        }}
-      >
-        {/* Header */}
+      <div ref={reportRef} style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '24px' }}>
         <div style={{ borderBottom: '2px solid #2563EB', paddingBottom: '16px', marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1F2937', marginBottom: '4px' }}>Account Manager</h3>
+              <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1F2937' }}>Account Manager</h3>
               <p style={{ color: '#4B5563', fontSize: '16px' }}>
                 Reporte Mensual - {months[selectedMonth]} {selectedYear}
               </p>
@@ -223,25 +204,24 @@ const Reporte = () => {
           </div>
         </div>
 
-        {/* KPIs */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
           <div style={{ backgroundColor: '#EFF6FF', borderRadius: '8px', padding: '16px', border: '1px solid #DBEAFE' }}>
-            <p style={{ fontSize: '12px', color: '#2563EB', marginBottom: '4px' }}>Total Leads Meta</p>
+            <p style={{ fontSize: '12px', color: '#2563EB' }}>Total Leads Meta</p>
             <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#1D4ED8' }}>{totalLeadsMeta.toLocaleString()}</p>
           </div>
           <div style={{ backgroundColor: '#F0FDF4', borderRadius: '8px', padding: '16px', border: '1px solid #DCFCE7' }}>
-            <p style={{ fontSize: '12px', color: '#16A34A', marginBottom: '4px' }}>Total Leads Generados</p>
+            <p style={{ fontSize: '12px', color: '#16A34A' }}>Total Leads Generados</p>
             <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#15803D' }}>{totalLeadsGenerados.toLocaleString()}</p>
             <p style={{ fontSize: '12px', color: '#22C55E', marginTop: '4px' }}>
               {totalLeadsMeta > 0 ? ((totalLeadsGenerados / totalLeadsMeta) * 100).toFixed(1) : '0.0'}% del meta
             </p>
           </div>
           <div style={{ backgroundColor: '#F5F3FF', borderRadius: '8px', padding: '16px', border: '1px solid #EDE9FE' }}>
-            <p style={{ fontSize: '12px', color: '#7C3AED', marginBottom: '4px' }}>Total Presupuesto</p>
+            <p style={{ fontSize: '12px', color: '#7C3AED' }}>Total Presupuesto</p>
             <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#6D28D9' }}>${totalPresupuesto.toLocaleString()}</p>
           </div>
           <div style={{ backgroundColor: '#FEFCE8', borderRadius: '8px', padding: '16px', border: '1px solid #FEF08A' }}>
-            <p style={{ fontSize: '12px', color: '#CA8A04', marginBottom: '4px' }}>Total Gasto</p>
+            <p style={{ fontSize: '12px', color: '#CA8A04' }}>Total Gasto</p>
             <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#A16207' }}>${totalGasto.toLocaleString()}</p>
             <p style={{ fontSize: '12px', color: '#EAB308', marginTop: '4px' }}>
               {totalPresupuesto > 0 ? ((totalGasto / totalPresupuesto) * 100).toFixed(1) : '0.0'}% del presupuesto
@@ -249,7 +229,6 @@ const Reporte = () => {
           </div>
         </div>
 
-        {/* Tabla de métricas */}
         <div style={{ marginBottom: '24px' }}>
           <h4 style={{ fontWeight: '600', color: '#1F2937', marginBottom: '12px', fontSize: '16px' }}>Métricas por Sucursal</h4>
           <table style={{ width: '100%', border: '1px solid #E5E7EB', borderRadius: '8px', borderCollapse: 'collapse' }}>
@@ -264,140 +243,66 @@ const Reporte = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', fontWeight: '500', backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>Leads Meta</td>
-                {sucursales.map(s => (
-                  <td key={s} style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', borderBottom: '1px solid #E5E7EB' }}>
-                    {getMetricasSucursal(s).leadsMeta.toLocaleString()}
-                  </td>
-                ))}
+              <tr><td style={{ padding: '12px 16px', fontSize: '14px', fontWeight: '500', backgroundColor: '#F9FAFB' }}>Leads Meta</td>
+                {sucursales.map(s => <td key={s} style={{ padding: '12px 16px', fontSize: '14px' }}>{getMetricasSucursal(s).leadsMeta.toLocaleString()}</td>)}
               </tr>
-              <tr>
-                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', fontWeight: '500', backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>Leads Generados</td>
-                {sucursales.map(s => (
-                  <td key={s} style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', borderBottom: '1px solid #E5E7EB' }}>
-                    {getMetricasSucursal(s).leadsGenerados.toLocaleString()}
-                  </td>
-                ))}
+              <tr><td style={{ padding: '12px 16px', fontSize: '14px', fontWeight: '500', backgroundColor: '#F9FAFB' }}>Leads Generados</td>
+                {sucursales.map(s => <td key={s} style={{ padding: '12px 16px', fontSize: '14px' }}>{getMetricasSucursal(s).leadsGenerados.toLocaleString()}</td>)}
               </tr>
-              <tr>
-                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', fontWeight: '500', backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>Avance</td>
+              <tr><td style={{ padding: '12px 16px', fontSize: '14px', fontWeight: '500', backgroundColor: '#F9FAFB' }}>Avance</td>
                 {sucursales.map(s => {
                   const m = getMetricasSucursal(s);
                   const p = m.leadsMeta > 0 ? ((m.leadsGenerados / m.leadsMeta) * 100).toFixed(1) : '0.0';
-                  return (
-                    <td key={s} style={{ padding: '12px 16px', fontSize: '14px', borderBottom: '1px solid #E5E7EB' }}>
-                      <span style={{ fontWeight: '500', color: parseFloat(p) >= 50 ? '#16A34A' : '#CA8A04' }}>
-                        {p}%
-                      </span>
-                    </td>
-                  );
+                  return <td key={s} style={{ padding: '12px 16px', fontSize: '14px' }}><span style={{ fontWeight: '500', color: parseFloat(p) >= 50 ? '#16A34A' : '#CA8A04' }}>{p}%</span></td>;
                 })}
               </tr>
-              <tr>
-                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', fontWeight: '500', backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>Presupuesto</td>
-                {sucursales.map(s => (
-                  <td key={s} style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', borderBottom: '1px solid #E5E7EB' }}>
-                    ${getMetricasSucursal(s).presupuesto.toLocaleString()}
-                  </td>
-                ))}
+              <tr><td style={{ padding: '12px 16px', fontSize: '14px', fontWeight: '500', backgroundColor: '#F9FAFB' }}>Presupuesto</td>
+                {sucursales.map(s => <td key={s} style={{ padding: '12px 16px', fontSize: '14px' }}>${getMetricasSucursal(s).presupuesto.toLocaleString()}</td>)}
               </tr>
-              <tr>
-                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', fontWeight: '500', backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>Gasto</td>
-                {sucursales.map(s => (
-                  <td key={s} style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', borderBottom: '1px solid #E5E7EB' }}>
-                    ${getMetricasSucursal(s).gasto.toLocaleString()}
-                  </td>
-                ))}
+              <tr><td style={{ padding: '12px 16px', fontSize: '14px', fontWeight: '500', backgroundColor: '#F9FAFB' }}>Gasto</td>
+                {sucursales.map(s => <td key={s} style={{ padding: '12px 16px', fontSize: '14px' }}>${getMetricasSucursal(s).gasto.toLocaleString()}</td>)}
               </tr>
-              <tr>
-                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1F2937', fontWeight: '500', backgroundColor: '#F9FAFB' }}>% Gasto</td>
+              <tr><td style={{ padding: '12px 16px', fontSize: '14px', fontWeight: '500', backgroundColor: '#F9FAFB' }}>% Gasto</td>
                 {sucursales.map(s => {
                   const m = getMetricasSucursal(s);
                   const p = m.presupuesto > 0 ? ((m.gasto / m.presupuesto) * 100).toFixed(1) : '0.0';
-                  return (
-                    <td key={s} style={{ padding: '12px 16px', fontSize: '14px' }}>
-                      <span style={{ fontWeight: '500', color: parseFloat(p) > 80 ? '#DC2626' : '#1F2937' }}>
-                        {p}%
-                      </span>
-                    </td>
-                  );
+                  return <td key={s} style={{ padding: '12px 16px', fontSize: '14px' }}><span style={{ fontWeight: '500', color: parseFloat(p) > 80 ? '#DC2626' : '#1F2937' }}>{p}%</span></td>;
                 })}
               </tr>
             </tbody>
           </table>
         </div>
 
-        {/* Resumen */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginTop: '24px' }}>
           <div style={{ backgroundColor: '#F9FAFB', borderRadius: '8px', padding: '16px', border: '1px solid #E5E7EB' }}>
             <h4 style={{ fontWeight: '600', color: '#1F2937', marginBottom: '8px', fontSize: '14px' }}>Eventos</h4>
             <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#1F2937' }}>{reportData?.eventos?.length || 0}</p>
-            <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>Total de eventos</p>
           </div>
-
           <div style={{ backgroundColor: '#F9FAFB', borderRadius: '8px', padding: '16px', border: '1px solid #E5E7EB' }}>
             <h4 style={{ fontWeight: '600', color: '#1F2937', marginBottom: '8px', fontSize: '14px' }}>Insumos</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                <span style={{ color: '#4B5563' }}>Activos:</span>
-                <span style={{ fontWeight: '500', color: '#16A34A' }}>
-                  {reportData?.insumos?.filter(i => i.estado === 'activo').length || 0}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                <span style={{ color: '#4B5563' }}>Por vencer:</span>
-                <span style={{ fontWeight: '500', color: '#CA8A04' }}>
-                  {reportData?.insumos?.filter(i => i.estado === 'por_vencer').length || 0}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                <span style={{ color: '#4B5563' }}>Vencidos:</span>
-                <span style={{ fontWeight: '500', color: '#DC2626' }}>
-                  {reportData?.insumos?.filter(i => i.estado === 'vencido').length || 0}
-                </span>
-              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}><span>Activos:</span><span style={{ fontWeight: '500', color: '#16A34A' }}>{reportData?.insumos?.filter(i => i.estado === 'activo').length || 0}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}><span>Por vencer:</span><span style={{ fontWeight: '500', color: '#CA8A04' }}>{reportData?.insumos?.filter(i => i.estado === 'por_vencer').length || 0}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}><span>Vencidos:</span><span style={{ fontWeight: '500', color: '#DC2626' }}>{reportData?.insumos?.filter(i => i.estado === 'vencido').length || 0}</span></div>
             </div>
           </div>
-
           <div style={{ backgroundColor: '#F9FAFB', borderRadius: '8px', padding: '16px', border: '1px solid #E5E7EB' }}>
             <h4 style={{ fontWeight: '600', color: '#1F2937', marginBottom: '8px', fontSize: '14px' }}>Tareas Express</h4>
-            <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#1F2937' }}>
-              {tareasStats.completadas}/{tareasStats.total}
-            </p>
-            <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>Tareas completadas</p>
-            <div style={{ marginTop: '8px', height: '6px', backgroundColor: '#E5E7EB', borderRadius: '9999px', overflow: 'hidden' }}>
-              <div 
-                style={{ 
-                  height: '100%', 
-                  backgroundColor: '#16A34A', 
-                  borderRadius: '9999px',
-                  width: `${tareasStats.total > 0 ? (tareasStats.completadas / tareasStats.total) * 100 : 0}%` 
-                }}
-              />
+            <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#1F2937' }}>{tareasStats.completadas}/{tareasStats.total}</p>
+            <div style={{ marginTop: '8px', height: '6px', backgroundColor: '#E5E7EB', borderRadius: '9999px' }}>
+              <div style={{ height: '100%', backgroundColor: '#16A34A', borderRadius: '9999px', width: `${tareasStats.total > 0 ? (tareasStats.completadas / tareasStats.total) * 100 : 0}%` }} />
             </div>
           </div>
-
           <div style={{ backgroundColor: '#F9FAFB', borderRadius: '8px', padding: '16px', border: '1px solid #E5E7EB' }}>
             <h4 style={{ fontWeight: '600', color: '#1F2937', marginBottom: '8px', fontSize: '14px' }}>Checklist Embudo</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                <span style={{ color: '#4B5563' }}>Awareness:</span>
-                <span style={{ fontWeight: '500' }}>{awarenessCompleted}/{awareness.length}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                <span style={{ color: '#4B5563' }}>Prospección:</span>
-                <span style={{ fontWeight: '500' }}>{prospeccionCompleted}/{prospeccion.length}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                <span style={{ color: '#4B5563' }}>Retargeting:</span>
-                <span style={{ fontWeight: '500' }}>{retargetingCompleted}/{retargeting.length}</span>
-              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}><span>Awareness:</span><span style={{ fontWeight: '500' }}>{awarenessCompleted}/{awareness.length}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}><span>Prospección:</span><span style={{ fontWeight: '500' }}>{prospeccionCompleted}/{prospeccion.length}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}><span>Retargeting:</span><span style={{ fontWeight: '500' }}>{retargetingCompleted}/{retargeting.length}</span></div>
             </div>
           </div>
         </div>
 
-        {/* Footer */}
         <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #E5E7EB', textAlign: 'center' }}>
           <p style={{ fontSize: '12px', color: '#9CA3AF' }}>Account Manager - Reporte generado automáticamente</p>
         </div>

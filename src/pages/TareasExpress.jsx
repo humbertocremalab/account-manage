@@ -14,41 +14,47 @@ const TareasExpress = () => {
   const [tareaEditando, setTareaEditando] = useState(null);
 
   useEffect(() => {
-   const loadData = async () => {
-  if (!user) return;
-  
-  setLoading(true);
-  try {
-    const savedTareas = await loadTareasExpress();
-    if (savedTareas && Array.isArray(savedTareas)) {
-      setTareas(savedTareas);
-    } else {
-      setTareas([]);
-    }
-  } catch (error) {
-    console.error('Error loading tareas express:', error);
-    setTareas([]);
-  } finally {
-    setLoading(false);
-  }
-};
+    const loadData = async () => {
+      if (!user) return;
+      
+      setLoading(true);
+      try {
+        console.log('Cargando tareas express para usuario:', user.uid);
+        const savedTareas = await loadTareasExpress(user.uid);
+        console.log('Tareas express cargadas:', savedTareas);
+        
+        if (savedTareas && savedTareas.length > 0) {
+          setTareas(savedTareas);
+        } else {
+          setTareas([]);
+        }
+      } catch (error) {
+        console.error('Error loading tareas express:', error);
+        setTareas([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     loadData();
   }, [user]);
 
   const saveTareasToDB = async (updatedTareas) => {
     if (user) {
-      await saveTareasExpress(updatedTareas);
+      console.log('Guardando tareas express:', updatedTareas.length);
+      await saveTareasExpress(user.uid, updatedTareas);
     }
   };
 
   const handleAddTarea = async (nuevaTarea) => {
+    console.log('Agregando tarea express:', nuevaTarea);
     const updatedTareas = [...tareas, nuevaTarea];
     setTareas(updatedTareas);
     await saveTareasToDB(updatedTareas);
   };
 
   const handleUpdateTarea = async (tareaActualizada) => {
+    console.log('Actualizando tarea express:', tareaActualizada);
     const updatedTareas = tareas.map(t => 
       t.id === tareaActualizada.id ? tareaActualizada : t
     );
@@ -58,6 +64,7 @@ const TareasExpress = () => {
   };
 
   const handleDeleteTarea = async (id) => {
+    console.log('Eliminando tarea express:', id);
     const updatedTareas = tareas.filter(t => t.id !== id);
     setTareas(updatedTareas);
     await saveTareasToDB(updatedTareas);

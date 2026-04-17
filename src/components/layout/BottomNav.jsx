@@ -1,10 +1,10 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Target, Calendar, Package, Zap, BarChart3, Users } from 'lucide-react';
+import { Target, Calendar, Package, Zap, BarChart3, Users, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const BottomNav = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, logout } = useAuth();
 
   const navItems = [
     { id: 'embudo', label: 'Embudo', icon: Target, path: '/embudo-meta' },
@@ -50,6 +50,15 @@ const BottomNav = () => {
             <span className="text-[10px] mt-1 font-medium">Usuarios</span>
           </NavLink>
         )}
+        
+        {/* Botón Cerrar Sesión */}
+        <button
+          onClick={logout}
+          className="flex flex-col items-center py-2 px-2 text-gray-500 hover:text-red-600 transition-colors"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="text-[10px] mt-1 font-medium">Salir</span>
+        </button>
       </div>
     </div>
   );

@@ -1,5 +1,14 @@
 import { db } from './firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  getDocs,
+  deleteDoc,
+  updateDoc,
+  onSnapshot 
+} from 'firebase/firestore';
 
 // Colecciones
 const METRICS_COLLECTION = 'metrics';
@@ -196,6 +205,62 @@ export const getAllDataForReport = async (userId, month, year) => {
       const fecha = new Date(tarea.fechaEntrada);
       return fecha.getMonth() === month && fecha.getFullYear() === year;
     });
+
+    // ============== GESTIÓN DE USUARIOS ==============
+const USER_ROLES_COLLECTION = 'userRoles';
+
+export const getUserRole = async (userId) => {
+  try {
+    const docRef = doc(db, USER_ROLES_COLLECTION, userId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().role;
+    }
+    return 'viewer';
+  } catch (error) {
+    console.error('Error getting user role:', error);
+    return 'viewer';
+  }
+};
+
+export const setUserRole = async (userId, role, email) => {
+  try {
+    const docRef = doc(db, USER_ROLES_COLLECTION, userId);
+    await setDoc(docRef, { role, email, updatedAt: new Date().toISOString() }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error('Error setting user role:', error);
+    return false;
+  }
+};
+
+export const getAllUsers = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, USER_ROLES_COLLECTION));
+    const users = [];
+    querySnapshot.forEach((doc) => {
+      users.push({
+        uid: doc.id,
+        ...doc.data()
+      });
+    });
+    return users;
+  } catch (error) {
+    console.error('Error getting all users:', error);
+    return [];
+  }
+};
+
+export const deleteUserRole = async (userId) => {
+  try {
+    const docRef = doc(db, USER_ROLES_COLLECTION, userId);
+    await deleteDoc(docRef);
+    return true;
+  } catch (error) {
+    console.error('Error deleting user role:', error);
+    return false;
+  }
+};
 
     return {
       metrics: metrics || {

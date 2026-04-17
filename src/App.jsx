@@ -8,6 +8,7 @@ import Insumos from './pages/Insumos';
 import TareasExpress from './pages/TareasExpress';
 import Reporte from './pages/Reporte';
 import Sidebar from './components/layout/Sidebar';
+import Usuarios from './pages/Usuarios';
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<Navigate to="/login" />} />
+        <Route path="/usuarios" element={<Usuarios />} />
       </Routes>
     );
   }

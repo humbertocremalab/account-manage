@@ -11,10 +11,12 @@ import {
   LogOut
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const { logout } = useAuth();
+  const { isAdmin } = useAuth();
 
   const menuItems = [
     { id: 'embudo', label: 'Embudo Meta', icon: Target, path: '/embudo-meta' },

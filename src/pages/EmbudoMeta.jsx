@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Plus, FolderOpen, Calendar } from 'lucide-react';
+import { Edit, Plus, FolderOpen, Calendar, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { saveMetrics, loadMetrics, saveChecklists, loadChecklists, saveDriveFolders, loadDriveFolders } from '../services/database';
 import MetricsCard from '../components/dashboard/MetricsCard';
@@ -9,7 +9,7 @@ import EditMetricsPopup from '../components/dashboard/EditMetricsPopup';
 import AddDriveFolderPopup from '../components/dashboard/AddDriveFolderPopup';
 
 const EmbudoMeta = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   const [sucursalActiva, setSucursalActiva] = useState('monterrey');
   const [showEditPopup, setShowEditPopup] = useState(false);
@@ -50,14 +50,12 @@ const EmbudoMeta = () => {
 
   useEffect(() => {
     const loadAllData = async () => {
-      if (!user) return;
-      
       setLoading(true);
       try {
         const savedMetrics = await loadMetrics(selectedMonth, selectedYear);
         if (savedMetrics) {
           setMetrics(savedMetrics);
-        } else {
+        } else if (isAdmin) {
           const exampleMetrics = {
             monterrey: { leadsMeta: 1350, leadsGenerados: 337, presupuesto: 135000, gasto: 80000 },
             saltillo: { leadsMeta: 850, leadsGenerados: 189, presupuesto: 85000, gasto: 42500 },
@@ -67,10 +65,10 @@ const EmbudoMeta = () => {
           await saveMetrics(selectedMonth, selectedYear, exampleMetrics);
         }
 
-        const savedChecklists = await loadChecklists(user.uid, selectedMonth, selectedYear);
+        const savedChecklists = await loadChecklists(selectedMonth, selectedYear);
         if (savedChecklists) {
           setChecklists(savedChecklists);
-        } else {
+        } else if (isAdmin) {
           const exampleChecklists = {
             awareness: [
               { text: 'Creativos de video para redes', completed: false },
@@ -86,7 +84,7 @@ const EmbudoMeta = () => {
             ]
           };
           setChecklists(exampleChecklists);
-          await saveChecklists(user.uid, selectedMonth, selectedYear, exampleChecklists);
+          await saveChecklists(selectedMonth, selectedYear, exampleChecklists);
         }
 
         const savedFolders = await loadDriveFolders();
@@ -101,20 +99,22 @@ const EmbudoMeta = () => {
     };
 
     loadAllData();
-  }, [user, selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, isAdmin]);
 
   const handleSaveMetrics = async (newMetrics) => {
+    if (!isAdmin) return;
+    
     const updatedMetrics = {
       ...metrics,
       [sucursalActiva]: newMetrics
     };
     setMetrics(updatedMetrics);
-    if (user) {
-      await saveMetrics(user.uid, selectedMonth, selectedYear, updatedMetrics);
-    }
+    await saveMetrics(selectedMonth, selectedYear, updatedMetrics);
   };
 
   const handleChecklistUpdate = async (section, action, index, value = null) => {
+    if (!isAdmin) return;
+    
     const newChecklists = { ...checklists };
     const newSection = [...newChecklists[section]];
     
@@ -129,12 +129,12 @@ const EmbudoMeta = () => {
     newChecklists[section] = newSection;
     setChecklists(newChecklists);
     
-    if (user) {
-      await saveChecklists(selectedMonth, selectedYear, newChecklists);
-    }
+    await saveChecklists(selectedMonth, selectedYear, newChecklists);
   };
 
   const handleAddDriveFolder = async (folderData) => {
+    if (!isAdmin) return;
+    
     const newFolders = {
       ...driveFolders,
       [folderData.categoria]: {
@@ -144,25 +144,22 @@ const EmbudoMeta = () => {
       }
     };
     setDriveFolders(newFolders);
-    
-    if (user) {
-      await saveDriveFolders(newFolders);
-    }
+    await saveDriveFolders(newFolders);
   };
 
   const handleRemoveDriveFolder = async (categoria) => {
+    if (!isAdmin) return;
+    
     const newFolders = {
       ...driveFolders,
       [categoria]: null
     };
     setDriveFolders(newFolders);
-    
-    if (user) {
-      await saveDriveFolders(user.uid, newFolders);
-    }
+    await saveDriveFolders(newFolders);
   };
 
   const handleOpenDrivePopup = (categoria = 'awareness') => {
+    if (!isAdmin) return;
     setCategoriaSeleccionada(categoria);
     setShowDrivePopup(true);
   };
@@ -191,6 +188,13 @@ const EmbudoMeta = () => {
 
   return (
     <div className="p-6">
+      {!isAdmin && (
+        <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center">
+          <Lock className="w-4 h-4 text-yellow-600 mr-2" />
+          <span className="text-sm text-yellow-700">Modo solo lectura - No puedes editar</span>
+        </div>
+      )}
+
       <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4">
         <div className="flex items-center space-x-4">
           <Calendar className="w-5 h-5 text-gray-600" />
@@ -223,13 +227,15 @@ const EmbudoMeta = () => {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-gray-800">Métricas Meta</h2>
-          <button
-            onClick={() => setShowEditPopup(true)}
-            className="flex items-center px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-          >
-            <Edit className="w-4 h-4 mr-1" />
-            Editar
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setShowEditPopup(true)}
+              className="flex items-center px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              <Edit className="w-4 h-4 mr-1" />
+              Editar
+            </button>
+          )}
         </div>
         
         <div className="flex space-x-2 border-b border-gray-200 mb-4">
@@ -304,25 +310,28 @@ const EmbudoMeta = () => {
           <ChecklistSection
             title="Awareness"
             items={checklists.awareness}
-            onAddItem={(text) => handleChecklistUpdate('awareness', 'add', null, text)}
-            onToggleItem={(index) => handleChecklistUpdate('awareness', 'toggle', index)}
-            onDeleteItem={(index) => handleChecklistUpdate('awareness', 'delete', index)}
+            onAddItem={isAdmin ? (text) => handleChecklistUpdate('awareness', 'add', null, text) : null}
+            onToggleItem={isAdmin ? (index) => handleChecklistUpdate('awareness', 'toggle', index) : null}
+            onDeleteItem={isAdmin ? (index) => handleChecklistUpdate('awareness', 'delete', index) : null}
+            readOnly={!isAdmin}
           />
           
           <ChecklistSection
             title="Prospección"
             items={checklists.prospeccion}
-            onAddItem={(text) => handleChecklistUpdate('prospeccion', 'add', null, text)}
-            onToggleItem={(index) => handleChecklistUpdate('prospeccion', 'toggle', index)}
-            onDeleteItem={(index) => handleChecklistUpdate('prospeccion', 'delete', index)}
+            onAddItem={isAdmin ? (text) => handleChecklistUpdate('prospeccion', 'add', null, text) : null}
+            onToggleItem={isAdmin ? (index) => handleChecklistUpdate('prospeccion', 'toggle', index) : null}
+            onDeleteItem={isAdmin ? (index) => handleChecklistUpdate('prospeccion', 'delete', index) : null}
+            readOnly={!isAdmin}
           />
           
           <ChecklistSection
             title="Retargeting"
             items={checklists.retargeting}
-            onAddItem={(text) => handleChecklistUpdate('retargeting', 'add', null, text)}
-            onToggleItem={(index) => handleChecklistUpdate('retargeting', 'toggle', index)}
-            onDeleteItem={(index) => handleChecklistUpdate('retargeting', 'delete', index)}
+            onAddItem={isAdmin ? (text) => handleChecklistUpdate('retargeting', 'add', null, text) : null}
+            onToggleItem={isAdmin ? (index) => handleChecklistUpdate('retargeting', 'toggle', index) : null}
+            onDeleteItem={isAdmin ? (index) => handleChecklistUpdate('retargeting', 'delete', index) : null}
+            readOnly={!isAdmin}
           />
         </div>
       </div>
@@ -335,7 +344,8 @@ const EmbudoMeta = () => {
             <div className="bg-gray-50 rounded-xl p-4">
               <DriveCarousel 
                 folderData={{...driveFolders.awareness, categoria: 'awareness'}}
-                onRemove={handleRemoveDriveFolder}
+                onRemove={isAdmin ? handleRemoveDriveFolder : null}
+                readOnly={!isAdmin}
               />
             </div>
           )}
@@ -344,7 +354,8 @@ const EmbudoMeta = () => {
             <div className="bg-gray-50 rounded-xl p-4">
               <DriveCarousel 
                 folderData={{...driveFolders.prospeccion, categoria: 'prospeccion'}}
-                onRemove={handleRemoveDriveFolder}
+                onRemove={isAdmin ? handleRemoveDriveFolder : null}
+                readOnly={!isAdmin}
               />
             </div>
           )}
@@ -353,7 +364,8 @@ const EmbudoMeta = () => {
             <div className="bg-gray-50 rounded-xl p-4">
               <DriveCarousel 
                 folderData={{...driveFolders.retargeting, categoria: 'retargeting'}}
-                onRemove={handleRemoveDriveFolder}
+                onRemove={isAdmin ? handleRemoveDriveFolder : null}
+                readOnly={!isAdmin}
               />
             </div>
           )}
@@ -364,20 +376,24 @@ const EmbudoMeta = () => {
               <p className="text-gray-600 mb-1">
                 No hay carpetas de Drive conectadas
               </p>
-              <p className="text-sm text-gray-400 mb-4">
-                Agrega el ID de una carpeta pública de Google Drive
-              </p>
-              <button
-                onClick={() => handleOpenDrivePopup('awareness')}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar carpeta
-              </button>
+              {isAdmin && (
+                <>
+                  <p className="text-sm text-gray-400 mb-4">
+                    Agrega el ID de una carpeta pública de Google Drive
+                  </p>
+                  <button
+                    onClick={() => handleOpenDrivePopup('awareness')}
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Agregar carpeta
+                  </button>
+                </>
+              )}
             </div>
           )}
 
-          {(driveFolders.awareness || driveFolders.prospeccion || driveFolders.retargeting) && (
+          {isAdmin && (driveFolders.awareness || driveFolders.prospeccion || driveFolders.retargeting) && (
             <button
               onClick={() => handleOpenDrivePopup('awareness')}
               className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center justify-center"
@@ -389,20 +405,24 @@ const EmbudoMeta = () => {
         </div>
       </div>
 
-      <EditMetricsPopup
-        isOpen={showEditPopup}
-        onClose={() => setShowEditPopup(false)}
-        metrics={metricsActuales}
-        onSave={handleSaveMetrics}
-        sucursal={sucursales.find(s => s.id === sucursalActiva)?.label}
-      />
+      {isAdmin && (
+        <>
+          <EditMetricsPopup
+            isOpen={showEditPopup}
+            onClose={() => setShowEditPopup(false)}
+            metrics={metricsActuales}
+            onSave={handleSaveMetrics}
+            sucursal={sucursales.find(s => s.id === sucursalActiva)?.label}
+          />
 
-      <AddDriveFolderPopup
-        isOpen={showDrivePopup}
-        onClose={() => setShowDrivePopup(false)}
-        onAdd={handleAddDriveFolder}
-        categoria={categoriaSeleccionada}
-      />
+          <AddDriveFolderPopup
+            isOpen={showDrivePopup}
+            onClose={() => setShowDrivePopup(false)}
+            onAdd={handleAddDriveFolder}
+            categoria={categoriaSeleccionada}
+          />
+        </>
+      )}
     </div>
   );
 };

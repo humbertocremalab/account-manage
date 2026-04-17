@@ -30,15 +30,15 @@ export const AuthProvider = ({ children }) => {
       if (user) {
         setUser(user);
         
-        // Verificar si es invitado (anónimo)
         if (user.isAnonymous) {
           setRole('viewer');
           setIsGuest(true);
+          console.log('Usuario anónimo (invitado)');
         } else {
           setIsGuest(false);
-          // Obtener el rol del usuario desde Firestore
           const userRole = await getUserRole(user.uid);
           setRole(userRole || 'viewer');
+          console.log('Usuario registrado, rol:', userRole);
         }
       } else {
         setUser(null);
@@ -98,6 +98,8 @@ export const AuthProvider = ({ children }) => {
 
   const isAdmin = role === 'admin' && !isGuest;
   const isViewer = role === 'viewer' || isGuest;
+
+  console.log('Auth state:', { user: user?.email, role, isAdmin, isGuest });
 
   const value = {
     user,

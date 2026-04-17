@@ -19,18 +19,12 @@ const TareasExpress = () => {
       
       setLoading(true);
       try {
-        console.log('Cargando tareas express para usuario:', user.uid);
         const savedTareas = await loadTareasExpress(user.uid);
-        console.log('Tareas express cargadas:', savedTareas);
-        
-        if (savedTareas && savedTareas.length > 0) {
+        if (savedTareas) {
           setTareas(savedTareas);
-        } else {
-          setTareas([]);
         }
       } catch (error) {
         console.error('Error loading tareas express:', error);
-        setTareas([]);
       } finally {
         setLoading(false);
       }
@@ -41,20 +35,17 @@ const TareasExpress = () => {
 
   const saveTareasToDB = async (updatedTareas) => {
     if (user) {
-      console.log('Guardando tareas express:', updatedTareas.length);
       await saveTareasExpress(user.uid, updatedTareas);
     }
   };
 
   const handleAddTarea = async (nuevaTarea) => {
-    console.log('Agregando tarea express:', nuevaTarea);
     const updatedTareas = [...tareas, nuevaTarea];
     setTareas(updatedTareas);
     await saveTareasToDB(updatedTareas);
   };
 
   const handleUpdateTarea = async (tareaActualizada) => {
-    console.log('Actualizando tarea express:', tareaActualizada);
     const updatedTareas = tareas.map(t => 
       t.id === tareaActualizada.id ? tareaActualizada : t
     );
@@ -64,7 +55,6 @@ const TareasExpress = () => {
   };
 
   const handleDeleteTarea = async (id) => {
-    console.log('Eliminando tarea express:', id);
     const updatedTareas = tareas.filter(t => t.id !== id);
     setTareas(updatedTareas);
     await saveTareasToDB(updatedTareas);
@@ -99,7 +89,7 @@ const TareasExpress = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-800 mb-1">Tareas Express</h2>

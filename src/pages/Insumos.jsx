@@ -19,18 +19,12 @@ const Insumos = () => {
       
       setLoading(true);
       try {
-        console.log('Cargando insumos para usuario:', user.uid);
         const savedInsumos = await loadInsumos(user.uid);
-        console.log('Insumos cargados:', savedInsumos);
-        
-        if (savedInsumos && savedInsumos.length > 0) {
+        if (savedInsumos) {
           setInsumos(savedInsumos);
-        } else {
-          setInsumos([]);
         }
       } catch (error) {
         console.error('Error loading insumos:', error);
-        setInsumos([]);
       } finally {
         setLoading(false);
       }
@@ -41,20 +35,17 @@ const Insumos = () => {
 
   const saveInsumosToDB = async (updatedInsumos) => {
     if (user) {
-      console.log('Guardando insumos:', updatedInsumos.length);
       await saveInsumos(user.uid, updatedInsumos);
     }
   };
 
   const handleAddInsumo = async (nuevoInsumo) => {
-    console.log('Agregando insumo:', nuevoInsumo);
     const updatedInsumos = [...insumos, nuevoInsumo];
     setInsumos(updatedInsumos);
     await saveInsumosToDB(updatedInsumos);
   };
 
   const handleUpdateInsumo = async (insumoActualizado) => {
-    console.log('Actualizando insumo:', insumoActualizado);
     const updatedInsumos = insumos.map(i => 
       i.id === insumoActualizado.id ? insumoActualizado : i
     );
@@ -64,13 +55,13 @@ const Insumos = () => {
   };
 
   const handleDeleteInsumo = async (id) => {
-    console.log('Eliminando insumo:', id);
     const updatedInsumos = insumos.filter(i => i.id !== id);
     setInsumos(updatedInsumos);
     await saveInsumosToDB(updatedInsumos);
   };
 
   const handleRenovarInsumo = async (insumo) => {
+    // Abrir popup con fecha de hoy + 90 días como sugerencia
     const nuevaFecha = new Date();
     nuevaFecha.setDate(nuevaFecha.getDate() + 90);
     
@@ -100,7 +91,7 @@ const Insumos = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-800 mb-1">Insumos / Materiales</h2>

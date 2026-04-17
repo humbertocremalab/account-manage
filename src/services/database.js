@@ -17,6 +17,7 @@ const DRIVE_FOLDERS_COLLECTION = 'driveFolders';
 const EVENTOS_COLLECTION = 'eventos';
 const INSUMOS_COLLECTION = 'insumos';
 const TAREAS_EXPRESS_COLLECTION = 'tareasExpress';
+const USER_ROLES_COLLECTION = 'userRoles';
 
 // ============== MÉTRICAS ==============
 export const saveMetrics = async (userId, month, year, metrics) => {
@@ -206,9 +207,25 @@ export const getAllDataForReport = async (userId, month, year) => {
       return fecha.getMonth() === month && fecha.getFullYear() === year;
     });
 
-    // ============== GESTIÓN DE USUARIOS ==============
-const USER_ROLES_COLLECTION = 'userRoles';
+    return {
+      metrics: metrics || {
+        monterrey: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 },
+        saltillo: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 },
+        cdmx: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 }
+      },
+      checklists: checklists || { awareness: [], prospeccion: [], retargeting: [] },
+      driveFolders: driveFolders || { awareness: null, prospeccion: null, retargeting: null },
+      eventos: eventosFiltrados,
+      insumos: insumos || [],
+      tareasExpress: tareasFiltradas
+    };
+  } catch (error) {
+    console.error('Error getting all data for report:', error);
+    return null;
+  }
+};
 
+// ============== GESTIÓN DE USUARIOS ==============
 export const getUserRole = async (userId) => {
   try {
     const docRef = doc(db, USER_ROLES_COLLECTION, userId);
@@ -259,23 +276,5 @@ export const deleteUserRole = async (userId) => {
   } catch (error) {
     console.error('Error deleting user role:', error);
     return false;
-  }
-};
-
-    return {
-      metrics: metrics || {
-        monterrey: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 },
-        saltillo: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 },
-        cdmx: { leadsMeta: 0, leadsGenerados: 0, presupuesto: 0, gasto: 0 }
-      },
-      checklists: checklists || { awareness: [], prospeccion: [], retargeting: [] },
-      driveFolders: driveFolders || { awareness: null, prospeccion: null, retargeting: null },
-      eventos: eventosFiltrados,
-      insumos: insumos || [],
-      tareasExpress: tareasFiltradas
-    };
-  } catch (error) {
-    console.error('Error getting all data for report:', error);
-    return null;
   }
 };

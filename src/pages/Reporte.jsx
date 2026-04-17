@@ -33,9 +33,11 @@ const Reporte = () => {
       if (!user) return;
       
       setLoading(true);
+      console.log('Cargando reporte para:', user.uid, selectedMonth, selectedYear);
+      
       try {
-        const data = await getAllDataForReport(selectedMonth, selectedYear);
-        console.log('Report data loaded:', data);
+        const data = await getAllDataForReport(user.uid, selectedMonth, selectedYear);
+        console.log('Datos del reporte:', data);
         setReportData(data);
       } catch (error) {
         console.error('Error loading report data:', error);
@@ -68,12 +70,10 @@ const Reporte = () => {
     }
     
     setGeneratingPDF(true);
-    console.log('Generando PDF...');
     
     try {
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Capturar el contenido como imagen
       const canvas = await html2canvas(reportRef.current, {
         scale: 2,
         backgroundColor: '#ffffff',
@@ -82,43 +82,31 @@ const Reporte = () => {
         useCORS: true,
       });
       
-      console.log('Canvas creado:', canvas.width, 'x', canvas.height);
-      
-      // Crear PDF
       const imgData = canvas.toDataURL('image/png');
       
-      // Configurar PDF (orientación vertical, mm)
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
       });
       
-      // Dimensiones de página A4
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       
-      // Calcular altura de la imagen proporcional al ancho
-      const imgWidth = pageWidth - 20; // márgenes de 10mm a cada lado
+      const imgWidth = pageWidth - 20;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
-      // Agregar imagen al PDF
       pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
       
-      // Si el contenido es más alto que una página, agregar más páginas
       let heightLeft = imgHeight;
-      let position = 10;
       
       while (heightLeft > pageHeight - 20) {
-        position = heightLeft - (pageHeight - 20);
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 10, -position + 10, imgWidth, imgHeight);
         heightLeft -= (pageHeight - 20);
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, -(imgHeight - heightLeft) + 10, imgWidth, imgHeight);
       }
       
-      // Descargar PDF
       pdf.save(`Reporte_${months[selectedMonth]}_${selectedYear}.pdf`);
-      console.log('PDF descargado exitosamente');
       
     } catch (error) {
       console.error('Error generando PDF:', error);
@@ -208,7 +196,7 @@ const Reporte = () => {
         </div>
       </div>
 
-      {/* Contenido del reporte - con estilos inline para evitar oklch */}
+      {/* Contenido del reporte */}
       <div 
         ref={reportRef} 
         style={{ 
@@ -218,7 +206,7 @@ const Reporte = () => {
           fontFamily: 'system-ui, -apple-system, sans-serif'
         }}
       >
-        {/* Header del reporte */}
+        {/* Header */}
         <div style={{ borderBottom: '2px solid #2563EB', paddingBottom: '16px', marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -235,7 +223,7 @@ const Reporte = () => {
           </div>
         </div>
 
-        {/* KPIs Generales */}
+        {/* KPIs */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
           <div style={{ backgroundColor: '#EFF6FF', borderRadius: '8px', padding: '16px', border: '1px solid #DBEAFE' }}>
             <p style={{ fontSize: '12px', color: '#2563EB', marginBottom: '4px' }}>Total Leads Meta</p>
@@ -261,7 +249,7 @@ const Reporte = () => {
           </div>
         </div>
 
-        {/* Tabla de métricas por sucursal */}
+        {/* Tabla de métricas */}
         <div style={{ marginBottom: '24px' }}>
           <h4 style={{ fontWeight: '600', color: '#1F2937', marginBottom: '12px', fontSize: '16px' }}>Métricas por Sucursal</h4>
           <table style={{ width: '100%', border: '1px solid #E5E7EB', borderRadius: '8px', borderCollapse: 'collapse' }}>
@@ -340,7 +328,7 @@ const Reporte = () => {
           </table>
         </div>
 
-        {/* Resumen adicional */}
+        {/* Resumen */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginTop: '24px' }}>
           <div style={{ backgroundColor: '#F9FAFB', borderRadius: '8px', padding: '16px', border: '1px solid #E5E7EB' }}>
             <h4 style={{ fontWeight: '600', color: '#1F2937', marginBottom: '8px', fontSize: '14px' }}>Eventos</h4>

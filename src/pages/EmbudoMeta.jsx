@@ -102,12 +102,12 @@ const EmbudoMeta = () => {
   }, [selectedMonth, selectedYear, isAdmin]);
 
   const handleSaveMetrics = async (newMetrics) => {
-  if (!isAdmin) return;
-  
-  // newMetrics ya contiene TODAS las sucursales (monterrey, saltillo, cdmx)
-  setMetrics(newMetrics);
-  await saveMetrics(selectedMonth, selectedYear, newMetrics);
-};
+    if (!isAdmin) return;
+    
+    // newMetrics ya contiene TODAS las sucursales (monterrey, saltillo, cdmx)
+    setMetrics(newMetrics);
+    await saveMetrics(selectedMonth, selectedYear, newMetrics);
+  };
 
   const handleChecklistUpdate = async (section, action, index, value = null) => {
     if (!isAdmin) return;
@@ -175,6 +175,19 @@ const EmbudoMeta = () => {
     ? ((metricsActuales.gasto / metricsActuales.presupuesto) * 100).toFixed(1)
     : '0.0';
 
+  // Calcular totales de las tres sucursales
+  const totalLeadsMeta = (metrics.monterrey?.leadsMeta || 0) + 
+                         (metrics.saltillo?.leadsMeta || 0) + 
+                         (metrics.cdmx?.leadsMeta || 0);
+
+  const totalLeadsGenerados = (metrics.monterrey?.leadsGenerados || 0) + 
+                              (metrics.saltillo?.leadsGenerados || 0) + 
+                              (metrics.cdmx?.leadsGenerados || 0);
+
+  const porcentajeTotalLeads = totalLeadsMeta > 0 
+    ? ((totalLeadsGenerados / totalLeadsMeta) * 100).toFixed(1)
+    : '0.0';
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -184,7 +197,7 @@ const EmbudoMeta = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 lg:p-6 pb-20 lg:pb-6">
       {!isAdmin && (
         <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center">
           <Lock className="w-4 h-4 text-yellow-600 mr-2" />
@@ -192,35 +205,39 @@ const EmbudoMeta = () => {
         </div>
       )}
 
+      {/* Selector de mes */}
       <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4">
-        <div className="flex items-center space-x-4">
-          <Calendar className="w-5 h-5 text-gray-600" />
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-          >
-            {months.map((month, index) => (
-              <option key={month} value={index}>{month}</option>
-            ))}
-          </select>
-          
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-          >
-            {years.map(year => (
-              <option key={year} value={year}>{year}</option>
-            ))}
-          </select>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-center space-x-2">
+            <Calendar className="w-5 h-5 text-gray-600" />
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+            >
+              {months.map((month, index) => (
+                <option key={month} value={index}>{month}</option>
+              ))}
+            </select>
+            
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+            >
+              {years.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
 
-          <span className="text-sm text-gray-500 ml-auto">
+          <span className="text-sm text-gray-500 sm:ml-auto">
             Métricas para {months[selectedMonth]} {selectedYear}
           </span>
         </div>
       </div>
 
+      {/* Métricas Meta */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-gray-800">Métricas Meta</h2>
@@ -235,12 +252,13 @@ const EmbudoMeta = () => {
           )}
         </div>
         
-        <div className="flex space-x-2 border-b border-gray-200 mb-4">
+        {/* Pestañas de sucursales */}
+        <div className="flex space-x-2 border-b border-gray-200 mb-4 overflow-x-auto">
           {sucursales.map(sucursal => (
             <button
               key={sucursal.id}
               onClick={() => setSucursalActiva(sucursal.id)}
-              className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+              className={`px-4 py-2 text-sm font-medium transition-colors relative whitespace-nowrap ${
                 sucursalActiva === sucursal.id
                   ? 'text-blue-600'
                   : 'text-gray-500 hover:text-gray-700'
@@ -254,7 +272,8 @@ const EmbudoMeta = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Tarjetas de métricas por sucursal */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           <MetricsCard
             title="Leads Meta"
             value={metricsActuales.leadsMeta.toLocaleString()}
@@ -282,8 +301,26 @@ const EmbudoMeta = () => {
           />
         </div>
 
+        {/* Total Leads - NUEVAS TARJETAS */}
+        <div className="grid grid-cols-2 gap-3 lg:gap-4 mt-4">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
+            <p className="text-sm opacity-90 mb-1">Total Leads Meta</p>
+            <p className="text-2xl font-bold">{totalLeadsMeta.toLocaleString()}</p>
+            <p className="text-xs opacity-80 mt-1">3 sucursales</p>
+          </div>
+          
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white">
+            <p className="text-sm opacity-90 mb-1">Total Leads Generados</p>
+            <p className="text-2xl font-bold">{totalLeadsGenerados.toLocaleString()}</p>
+            <p className="text-xs opacity-80 mt-1">{porcentajeTotalLeads}% del meta total</p>
+          </div>
+        </div>
+
+        {/* Leads generados vs meta (por sucursal activa) */}
         <div className="mt-4 bg-gray-50 rounded-lg p-4">
-          <p className="text-sm text-gray-600 mb-1">Leads generados vs meta</p>
+          <p className="text-sm text-gray-600 mb-1">
+            Leads generados vs meta ({sucursales.find(s => s.id === sucursalActiva)?.label})
+          </p>
           <div className="flex items-center space-x-2">
             <span className="text-lg font-semibold text-gray-800">
               {metricsActuales.leadsGenerados.toLocaleString()} / {metricsActuales.leadsMeta.toLocaleString()}
@@ -301,9 +338,10 @@ const EmbudoMeta = () => {
         </div>
       </div>
 
+      {/* Checklist del Embudo */}
       <div className="mb-6">
         <h3 className="text-xl font-semibold text-gray-800 mb-4">Checklist del Embudo</h3>
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           <ChecklistSection
             title="Awareness"
             items={checklists.awareness}
@@ -333,6 +371,7 @@ const EmbudoMeta = () => {
         </div>
       </div>
 
+      {/* Artes del Embudo */}
       <div>
         <h3 className="text-xl font-semibold text-gray-800 mb-4">Artes del Embudo</h3>
         
@@ -402,14 +441,15 @@ const EmbudoMeta = () => {
         </div>
       </div>
 
+      {/* Popups */}
       {isAdmin && (
         <>
           <EditMetricsPopup
-  isOpen={showEditPopup}
-  onClose={() => setShowEditPopup(false)}
-  metrics={metrics}  // Pasamos TODAS las métricas, no solo la sucursal activa
-  onSave={handleSaveMetrics}
-/>
+            isOpen={showEditPopup}
+            onClose={() => setShowEditPopup(false)}
+            metrics={metrics}
+            onSave={handleSaveMetrics}
+          />
 
           <AddDriveFolderPopup
             isOpen={showDrivePopup}

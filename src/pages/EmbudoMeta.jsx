@@ -7,6 +7,7 @@ import ChecklistSection from '../components/dashboard/ChecklistSection';
 import DriveCarousel from '../components/dashboard/DriveCarousel';
 import EditMetricsPopup from '../components/dashboard/EditMetricsPopup';
 import AddDriveFolderPopup from '../components/dashboard/AddDriveFolderPopup';
+import LeadsCalendar from '../components/dashboard/LeadsCalendar';
 
 const EmbudoMeta = () => {
   const { user, isAdmin } = useAuth();
@@ -15,6 +16,7 @@ const EmbudoMeta = () => {
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [showDrivePopup, setShowDrivePopup] = useState(false);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('awareness');
+  const [leadsDiarios, setLeadsDiarios] = useState({});
   
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
@@ -104,7 +106,6 @@ const EmbudoMeta = () => {
   const handleSaveMetrics = async (newMetrics) => {
     if (!isAdmin) return;
     
-    // newMetrics ya contiene TODAS las sucursales (monterrey, saltillo, cdmx)
     setMetrics(newMetrics);
     await saveMetrics(selectedMonth, selectedYear, newMetrics);
   };
@@ -159,6 +160,19 @@ const EmbudoMeta = () => {
     if (!isAdmin) return;
     setCategoriaSeleccionada(categoria);
     setShowDrivePopup(true);
+  };
+
+  // Función para actualizar leads diarios
+  const handleUpdateLeadsDiarios = (date, value) => {
+    if (!isAdmin) return;
+    
+    const updatedLeads = { ...leadsDiarios };
+    if (value === '' || value === 0 || value === '0') {
+      delete updatedLeads[date];
+    } else {
+      updatedLeads[date] = parseInt(value) || 0;
+    }
+    setLeadsDiarios(updatedLeads);
   };
 
   const sucursales = [
@@ -301,7 +315,7 @@ const EmbudoMeta = () => {
           />
         </div>
 
-        {/* Total Leads - NUEVAS TARJETAS */}
+        {/* Total Leads */}
         <div className="grid grid-cols-2 gap-3 lg:gap-4 mt-4">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
             <p className="text-sm opacity-90 mb-1">Total Leads Meta</p>
@@ -316,7 +330,7 @@ const EmbudoMeta = () => {
           </div>
         </div>
 
-        {/* Leads generados vs meta (por sucursal activa) */}
+        {/* Leads generados vs meta */}
         <div className="mt-4 bg-gray-50 rounded-lg p-4">
           <p className="text-sm text-gray-600 mb-1">
             Leads generados vs meta ({sucursales.find(s => s.id === sucursalActiva)?.label})
@@ -335,6 +349,15 @@ const EmbudoMeta = () => {
               style={{ width: `${porcentajeLeads}%` }}
             />
           </div>
+        </div>
+
+        {/* Leads Diarios - Calendario */}
+        <div className="mt-6">
+          <LeadsCalendar 
+            leadsDiarios={leadsDiarios}
+            onUpdateLeads={handleUpdateLeadsDiarios}
+            readOnly={!isAdmin}
+          />
         </div>
       </div>
 

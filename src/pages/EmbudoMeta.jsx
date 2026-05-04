@@ -16,10 +16,16 @@ const EmbudoMeta = () => {
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [showDrivePopup, setShowDrivePopup] = useState(false);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('awareness');
-  const [leadsDiarios, setLeadsDiarios] = useState({});
   
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
+
+  // Leads diarios por sucursal
+  const [leadsDiarios, setLeadsDiarios] = useState({
+    monterrey: {},
+    saltillo: {},
+    cdmx: {}
+  });
 
   const months = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -49,6 +55,23 @@ const EmbudoMeta = () => {
   const [metrics, setMetrics] = useState(defaultMetrics);
   const [checklists, setChecklists] = useState(defaultChecklists);
   const [driveFolders, setDriveFolders] = useState(defaultDriveFolders);
+
+  // Guardar leadsDiarios en localStorage para persistencia
+  useEffect(() => {
+    const savedLeads = localStorage.getItem('leadsDiarios');
+    if (savedLeads) {
+      try {
+        setLeadsDiarios(JSON.parse(savedLeads));
+      } catch (e) {
+        console.error('Error loading leadsDiarios:', e);
+      }
+    }
+  }, []);
+
+  // Guardar en localStorage cada vez que cambien
+  useEffect(() => {
+    localStorage.setItem('leadsDiarios', JSON.stringify(leadsDiarios));
+  }, [leadsDiarios]);
 
   useEffect(() => {
     const loadAllData = async () => {
@@ -162,17 +185,23 @@ const EmbudoMeta = () => {
     setShowDrivePopup(true);
   };
 
-  // Función para actualizar leads diarios
+  // Función para actualizar leads diarios POR SUCURSAL
   const handleUpdateLeadsDiarios = (date, value) => {
     if (!isAdmin) return;
     
-    const updatedLeads = { ...leadsDiarios };
-    if (value === '' || value === 0 || value === '0') {
-      delete updatedLeads[date];
-    } else {
-      updatedLeads[date] = parseInt(value) || 0;
-    }
-    setLeadsDiarios(updatedLeads);
+    setLeadsDiarios(prev => {
+      const updated = { ...prev };
+      const sucursalLeads = { ...updated[sucursalActiva] };
+      
+      if (value === '' || value === 0 || value === '0') {
+        delete sucursalLeads[date];
+      } else {
+        sucursalLeads[date] = parseInt(value) || 0;
+      }
+      
+      updated[sucursalActiva] = sucursalLeads;
+      return updated;
+    });
   };
 
   const sucursales = [
@@ -351,12 +380,13 @@ const EmbudoMeta = () => {
           </div>
         </div>
 
-        {/* Leads Diarios - Calendario */}
+        {/* Leads Diarios - Calendario por sucursal */}
         <div className="mt-6">
           <LeadsCalendar 
-            leadsDiarios={leadsDiarios}
+            leadsDiarios={leadsDiarios[sucursalActiva] || {}}
             onUpdateLeads={handleUpdateLeadsDiarios}
             readOnly={!isAdmin}
+            sucursal={sucursales.find(s => s.id === sucursalActiva)?.label}
           />
         </div>
       </div>
